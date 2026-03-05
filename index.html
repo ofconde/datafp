@@ -1,0 +1,1281 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Informe CFI 2026</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',sans-serif;background:#f4f6f9;color:#2c3e50;font-size:14px}
+
+/* HEADER */
+header{background:#1a2744;color:white;padding:22px 36px;display:flex;justify-content:space-between;align-items:center;-webkit-print-color-adjust:exact}
+.header-left{display:flex;align-items:center;gap:14px}
+.cfi-logo{width:46px;height:46px;background:white;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:0.6rem;font-weight:800;color:#1a2744;text-align:center;line-height:1.2;flex-shrink:0}
+header h1{font-size:1.25rem;font-weight:600}
+header .sub{font-size:0.78rem;opacity:0.6;margin-top:2px}
+.header-right{display:flex;align-items:center;gap:10px}
+.badge{background:#2ecc71;color:white;padding:5px 14px;border-radius:20px;font-size:0.75rem;font-weight:700}
+.btn{background:rgba(255,255,255,0.15);color:white;border:1px solid rgba(255,255,255,0.35);padding:6px 14px;border-radius:7px;font-size:0.78rem;cursor:pointer;font-weight:600}
+.btn:hover{background:rgba(255,255,255,0.25)}
+
+/* META PANEL */
+.meta-panel{background:#1a2744;padding:28px 36px}
+.meta-inner{max-width:1150px;margin:0 auto}
+.meta-title{color:rgba(255,255,255,0.6);font-size:0.72rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
+.meta-nums{display:flex;align-items:flex-end;gap:32px;flex-wrap:wrap;margin-bottom:18px}
+.meta-num{color:white}
+.meta-num .n-val{font-size:2rem;font-weight:700;line-height:1}
+.meta-num .n-lbl{font-size:0.72rem;color:rgba(255,255,255,0.5);margin-top:4px;text-transform:uppercase;letter-spacing:0.5px}
+.meta-num.highlight .n-val{color:#2ecc71;font-size:2.4rem}
+.meta-sep{color:rgba(255,255,255,0.2);font-size:2rem;padding-bottom:8px}
+.meta-pct{background:rgba(255,255,255,0.08);border-radius:10px;padding:14px 18px;display:flex;align-items:center;gap:16px;margin-left:auto}
+.meta-pct .pct-val{font-size:2.8rem;font-weight:800;color:#2ecc71;line-height:1}
+.meta-pct .pct-lbl{font-size:0.75rem;color:rgba(255,255,255,0.5);line-height:1.5}
+.progress-track{background:rgba(255,255,255,0.12);border-radius:20px;height:18px;width:100%;overflow:hidden}
+.progress-fill{height:100%;border-radius:20px;background:linear-gradient(90deg,#27ae60,#2ecc71);transition:width 1s ease;position:relative}
+.progress-fill::after{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.15),transparent);animation:shimmer 2s infinite}
+@keyframes shimmer{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+.progress-labels{display:flex;justify-content:space-between;margin-top:6px}
+.progress-labels span{font-size:0.7rem;color:rgba(255,255,255,0.45)}
+.meta-stats{display:flex;gap:16px;margin-top:14px;flex-wrap:wrap}
+.meta-stat{background:rgba(255,255,255,0.07);border-radius:8px;padding:10px 16px;flex:1;min-width:130px}
+.meta-stat .s-val{color:white;font-size:1.1rem;font-weight:700}
+.meta-stat .s-lbl{color:rgba(255,255,255,0.45);font-size:0.68rem;text-transform:uppercase;letter-spacing:0.4px;margin-top:2px}
+.meta-stat .s-sub{font-size:0.7rem;margin-top:3px}
+.on-track{color:#2ecc71}.off-track{color:#e74c3c}.neutral{color:#f39c12}
+
+/* NAV */
+.nav{display:flex;gap:3px;padding:16px 20px 0;max-width:1150px;margin:0 auto}
+.nav-tab{padding:9px 20px;border-radius:8px 8px 0 0;font-size:0.82rem;font-weight:600;cursor:pointer;color:#7f8c8d;border:none;background:#e8edf2;transition:all 0.2s}
+.nav-tab.active{background:#1a2744;color:white}
+
+.container{max-width:1150px;margin:0 auto;padding:20px}
+.tab-content{display:none}.tab-content.active{display:block}
+
+/* SUBTABS */
+.subtabs{display:flex;gap:4px;margin-bottom:20px;background:white;padding:5px;border-radius:9px;box-shadow:0 2px 6px rgba(0,0,0,0.06);width:fit-content}
+.subtab{padding:7px 18px;border-radius:6px;font-size:0.8rem;font-weight:600;cursor:pointer;color:#7f8c8d;border:none;background:transparent;transition:all 0.2s}
+.subtab.active{background:#2980b9;color:white}
+
+/* KPI */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+@media(max-width:800px){.kpi-grid{grid-template-columns:repeat(2,1fr)}}
+.kpi{background:white;border-radius:9px;padding:18px 20px;box-shadow:0 2px 7px rgba(0,0,0,0.06);border-left:4px solid #1a2744}
+.kpi.b{border-left-color:#2980b9}.kpi.g{border-left-color:#27ae60}.kpi.o{border-left-color:#e67e22}
+.kpi .lbl{font-size:0.68rem;text-transform:uppercase;letter-spacing:0.5px;color:#7f8c8d}
+.kpi .val{font-size:1.6rem;font-weight:700;color:#1a2744;margin:4px 0 2px}
+.kpi.b .val{color:#2980b9}.kpi.g .val{color:#27ae60}.kpi.o .val{color:#e67e22}
+.kpi .sub{font-size:0.72rem;color:#95a5a6}
+.up{color:#27ae60;font-weight:600;font-size:0.72rem}.down{color:#e74c3c;font-weight:600;font-size:0.72rem}
+
+/* SECTIONS */
+.section{background:white;border-radius:9px;padding:20px;box-shadow:0 2px 7px rgba(0,0,0,0.06);margin-bottom:18px}
+.section h2{font-size:0.88rem;font-weight:600;color:#1a2744;margin-bottom:14px;padding-bottom:9px;border-bottom:2px solid #f0f0f0}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px}
+@media(max-width:800px){.two-col{grid-template-columns:1fr}}
+.chart-wrap canvas{max-height:240px}
+.chart-wrap.md canvas{max-height:300px}
+.chart-wrap.lg canvas{max-height:380px}
+.chart-wrap.xl canvas{max-height:440px}
+.chart-wrap.donut canvas{max-height:220px}
+
+/* TABLE */
+table{width:100%;border-collapse:collapse;font-size:0.8rem}
+th{background:#f8f9fb;text-align:left;padding:8px 10px;font-weight:600;color:#555;font-size:0.68rem;text-transform:uppercase;letter-spacing:0.4px}
+td{padding:8px 10px;border-bottom:1px solid #f0f2f5}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#fafbfc}
+td.r,th.r{text-align:right}
+.tr-total td{font-weight:700;background:#f8f9fb}
+.pill{display:inline-block;padding:2px 7px;border-radius:9px;font-size:0.67rem;font-weight:600;margin:1px}
+.p1{background:#eaf4ff;color:#2980b9}.p2{background:#f0fff4;color:#27ae60}
+.p3{background:#fff4e5;color:#e67e22}.p4{background:#f5f0ff;color:#8e44ad}.p5{background:#fff0f0;color:#e74c3c}
+.vup{background:#f0fff4;color:#27ae60;display:inline-block;padding:2px 7px;border-radius:9px;font-size:0.7rem;font-weight:700}
+.vdown{background:#fff0f0;color:#e74c3c;display:inline-block;padding:2px 7px;border-radius:9px;font-size:0.7rem;font-weight:700}
+.vneu{background:#f4f4f4;color:#95a5a6;display:inline-block;padding:2px 7px;border-radius:9px;font-size:0.7rem;font-weight:700}
+
+/* SEMAFORO GRID */
+.semaforo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}
+.sem-card{border-radius:9px;padding:16px;border-left:5px solid #ccc;background:#fafbfc}
+.sem-card.verde{border-left-color:#27ae60;background:#f0fff4}
+.sem-card.rojo{border-left-color:#e74c3c;background:#fff5f5}
+.sem-card.amarillo{border-left-color:#f39c12;background:#fffbf0}
+.sem-card.gris{border-left-color:#95a5a6;background:#f8f9fb}
+.sem-prov{font-size:0.7rem;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:0.5px}
+.sem-icon{font-size:1.4rem;line-height:1;margin:4px 0}
+
+footer{text-align:center;padding:18px;font-size:0.72rem;color:#aaa;border-top:1px solid #eee;margin-top:6px}
+@media print{.btn,.nav,.subtabs{display:none!important}.tab-content{display:block!important}body{background:white}header,. meta-panel{-webkit-print-color-adjust:exact}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <div class="cfi-logo">CFI</div>
+    <div>
+      <div class="sub">Consejo Federal de Inversiones — Financiamiento Productivo</div>
+      <h1>Informe de Gestión de Créditos 2026</h1>
+      <div class="sub">Datos cargados: Enero y Febrero 2026 · Histórico 2025 · Generado: 03/03/2026</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="badge">ENE–FEB 2026</div>
+    <button class="btn" onclick="refreshData()" id="refreshBtn">🔄 Actualizar Datos</button>
+    <button class="btn" onclick="window.print()">🖨️ Exportar PDF</button>
+  </div>
+</header>
+
+<!-- META PANEL -->
+<div class="meta-panel">
+  <div class="meta-inner">
+    <div class="meta-title">🎯 Objetivo 2026 — Duplicar el monto efectivizado de 2025</div>
+    <div class="meta-nums">
+      <div class="meta-num">
+        <div class="n-val">$103.503M</div>
+        <div class="n-lbl">Total efectivizado 2025</div>
+      </div>
+      <div class="meta-sep">→</div>
+      <div class="meta-num highlight">
+        <div class="n-val">$199.999M</div>
+        <div class="n-lbl">Meta 2026 (provincial)</div>
+      </div>
+      <div class="meta-pct">
+        <div class="pct-val">7,8%</div>
+        <div>
+          <div class="pct-lbl">de la meta alcanzado</div>
+          <div class="pct-lbl">$15.628M acumulados</div>
+          <div class="pct-lbl">(ene + feb 2026)</div>
+        </div>
+      </div>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill" id="progressFill" style="width:0%"></div>
+    </div>
+    <div class="progress-labels">
+      <span>$0</span><span>25% — $50.000M</span><span>50% — $100.000M</span><span>75% — $150.000M</span><span>META — $199.999M</span>
+    </div>
+    
+    <!-- CUMPLIMIENTO GENERAL -->
+    <div style="margin-top:20px;padding:16px;background:rgba(255,255,255,0.08);border-radius:10px;display:flex;align-items:center;gap:20px">
+      <div style="flex:0 0 auto">
+        <div style="width:80px;height:80px;border-radius:50%;background:conic-gradient(#e74c3c 0% 7.8%, rgba(255,255,255,0.15) 7.8% 100%);display:flex;align-items:center;justify-content:center;position:relative">
+          <div style="width:64px;height:64px;border-radius:50%;background:#1a2744;display:flex;flex-direction:column;align-items:center;justify-content:center">
+            <div style="font-size:1.4rem;font-weight:800;color:#e74c3c;line-height:1">7,8%</div>
+            <div style="font-size:0.6rem;color:rgba(255,255,255,0.5);margin-top:2px">cumplido</div>
+          </div>
+        </div>
+      </div>
+      <div style="flex:1">
+        <div style="font-size:0.7rem;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:4px">📊 Cumplimiento General Provincial</div>
+        <div style="font-size:0.85rem;color:white;line-height:1.5">De las <strong>23 provincias</strong>, el promedio ponderado de cumplimiento de metas es del <strong style="color:#e74c3c">7,8%</strong> · <span style="color:#f39c12">Por debajo del ritmo esperado</span></div>
+        <div style="font-size:0.68rem;color:rgba(255,255,255,0.4);margin-top:6px">Calculado: Total efectivizado ($15.628M) ÷ Suma de metas provinciales ($199.999M) · Esperado para feb: ~16,7% (2/12 meses)</div>
+      </div>
+    </div>
+    
+    <div class="meta-stats">
+      <div class="meta-stat"><div class="s-val">$15.628M</div><div class="s-lbl">Acumulado 2026</div><div class="s-sub neutral">Ene + Feb</div></div>
+      <div class="meta-stat"><div class="s-val">$184.371M</div><div class="s-lbl">Restante para la meta</div><div class="s-sub neutral">en 10 meses</div></div>
+      <div class="meta-stat"><div class="s-val">$18.437M</div><div class="s-lbl">Necesario por mes</div><div class="s-sub neutral">para alcanzar la meta</div></div>
+      <div class="meta-stat"><div class="s-val">$7.814M</div><div class="s-lbl">Promedio mensual 2026</div><div class="s-sub off-track">↓ 58% por debajo del ritmo</div></div>
+      <div class="meta-stat"><div class="s-val">$33.333M</div><div class="s-lbl">Ritmo esperado/mes</div><div class="s-sub neutral">$199.999M ÷ 6 meses restantes</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="nav">
+  <button class="nav-tab active" onclick="showNav('tramitadas',this)">📋 Tramitadas</button>
+  <button class="nav-tab" onclick="showNav('efectivizadas',this)">✅ Efectivizadas</button>
+  <button class="nav-tab" onclick="showNav('interanual',this)">📈 Comparativo Interanual</button>
+</div>
+
+<div class="container">
+
+<!-- ===== TRAMITADAS ===== -->
+<div class="tab-content active" id="tab-tramitadas">
+  <div class="subtabs">
+    <button class="subtab active" onclick="showSub('tr','enero',this)">Enero 2026</button>
+    <button class="subtab" onclick="showSub('tr','febrero',this)">Febrero 2026</button>
+    <button class="subtab" onclick="showSub('tr','garantia',this)">🔒 Por Garantía</button>
+    <button class="subtab" onclick="showSub('tr','linea',this)">📋 Por Línea</button>
+    <button class="subtab" onclick="showSub('tr','region',this)">🗺️ Por Región</button>
+  </div>
+  <div id="tr-enero">
+    <div class="kpi-grid">
+      <div class="kpi"><div class="lbl">Solicitudes Tramitadas</div><div class="val">62</div><div class="sub">Enero 2026</div></div>
+      <div class="kpi b"><div class="lbl">Monto Total</div><div class="val">$4.873M</div><div class="sub">Enero 2026</div></div>
+      <div class="kpi g"><div class="lbl">Provincias Activas</div><div class="val">18</div><div class="sub">de 23 provincias</div></div>
+      <div class="kpi o"><div class="lbl">Líneas Activas</div><div class="val">5</div><div class="sub">de 9 líneas</div></div>
+    </div>
+    <div class="two-col">
+      <div class="section"><h2>📍 Monto por Región — Enero</h2><div class="chart-wrap md"><canvas id="trEnRegion"></canvas></div></div>
+      <div class="section"><h2>📋 Solicitudes por Línea — Enero</h2><div class="chart-wrap md"><canvas id="trEnLinea"></canvas></div></div>
+    </div>
+    <div class="two-col">
+      <div class="section"><h2>🔒 Garantías — Enero (Top 8)</h2><div class="chart-wrap donut"><canvas id="trEnGar"></canvas></div></div>
+      <div class="section"><h2>💰 Monto por Línea — Enero</h2><div class="chart-wrap md"><canvas id="trEnLineaMonto"></canvas></div></div>
+    </div>
+    <div class="section"><h2>🗺️ Solicitudes por Provincia — Enero</h2><div class="chart-wrap lg"><canvas id="trEnProv"></canvas></div></div>
+  </div>
+  <div id="tr-febrero" style="display:none">
+    <div class="kpi-grid">
+      <div class="kpi"><div class="lbl">Solicitudes Tramitadas</div><div class="val">34</div><div class="sub">Febrero 2026</div></div>
+      <div class="kpi b"><div class="lbl">Monto Total</div><div class="val">$2.154M</div><div class="sub">Febrero 2026</div></div>
+      <div class="kpi g"><div class="lbl">Provincias Activas</div><div class="val">13</div><div class="sub">de 23 provincias</div></div>
+      <div class="kpi o"><div class="lbl">Líneas Activas</div><div class="val">5</div><div class="sub">de 9 líneas</div></div>
+    </div>
+    <div class="two-col">
+      <div class="section"><h2>📍 Monto por Región — Febrero</h2><div class="chart-wrap md"><canvas id="trFebRegion"></canvas></div></div>
+      <div class="section"><h2>📋 Solicitudes por Línea — Febrero</h2><div class="chart-wrap md"><canvas id="trFebLinea"></canvas></div></div>
+    </div>
+    <div class="two-col">
+      <div class="section"><h2>🔒 Garantías — Febrero (Top 8)</h2><div class="chart-wrap donut"><canvas id="trFebGar"></canvas></div></div>
+      <div class="section"><h2>💰 Monto por Línea — Febrero</h2><div class="chart-wrap md"><canvas id="trFebLineaMonto"></canvas></div></div>
+    </div>
+    <div class="section"><h2>🗺️ Solicitudes por Provincia — Febrero</h2><div class="chart-wrap lg"><canvas id="trFebProv"></canvas></div></div>
+  </div>
+  
+  <!-- POR GARANTÍA - TRAMITADAS -->
+  <div id="tr-garantia" style="display:none">
+    <div class="kpi-grid">
+      <div class="kpi"><div class="lbl">Total Garantías</div><div class="val" id="trGarTotalCant">-</div><div class="sub">Ene + Feb 2026</div></div>
+      <div class="kpi b"><div class="lbl">Monto Total</div><div class="val" id="trGarTotalMonto">-</div><div class="sub">Ene + Feb 2026</div></div>
+      <div class="kpi g"><div class="lbl">Garantía Principal</div><div class="val" id="trGarPrincipal">-</div><div class="sub">Mayor participación</div></div>
+      <div class="kpi o"><div class="lbl">Promedio por Solicitud</div><div class="val" id="trGarPromedio">-</div><div class="sub">Monto promedio</div></div>
+    </div>
+    <div class="two-col">
+      <div class="section"><h2>🔒 Top 10 Garantías por Monto</h2><div class="chart-wrap md"><canvas id="trGarTopChart"></canvas></div></div>
+      <div class="section"><h2>📊 Top 10 Garantías por Cantidad</h2><div class="chart-wrap md"><canvas id="trGarCantChart"></canvas></div></div>
+    </div>
+    <div class="section">
+      <h2>📈 Comparativo Enero vs Febrero - Tramitadas por Garantía</h2>
+      <div class="chart-wrap xl"><canvas id="trGarComparativo"></canvas></div>
+    </div>
+  </div>
+  
+  <!-- POR LÍNEA - TRAMITADAS -->
+  <div id="tr-linea" style="display:none">
+    <div class="kpi-grid">
+      <div class="kpi"><div class="lbl">Total Líneas Activas</div><div class="val" id="trLineaTotalCant">-</div><div class="sub">Ene + Feb 2026</div></div>
+      <div class="kpi b"><div class="lbl">Monto Total</div><div class="val" id="trLineaTotalMonto">-</div><div class="sub">Ene + Feb 2026</div></div>
+      <div class="kpi g"><div class="lbl">Línea Principal</div><div class="val" id="trLineaPrincipal">-</div><div class="sub">Mayor participación</div></div>
+      <div class="kpi o"><div class="lbl">Promedio por Línea</div><div class="val" id="trLineaPromedio">-</div><div class="sub">Monto promedio</div></div>
+    </div>
+    <div class="two-col">
+      <div class="section"><h2>📋 Solicitudes por Línea (Ene+Feb)</h2><div class="chart-wrap md"><canvas id="trLineaCantChart"></canvas></div></div>
+      <div class="section"><h2>💰 Monto por Línea (Ene+Feb)</h2><div class="chart-wrap md"><canvas id="trLineaMontoChart"></canvas></div></div>
+    </div>
+    <div class="section">
+      <h2>📈 Evolución Enero vs Febrero - Tramitadas por Línea</h2>
+      <div class="chart-wrap xl"><canvas id="trLineaComparativo"></canvas></div>
+    </div>
+  </div>
+  
+  <!-- POR REGIÓN - TRAMITADAS -->
+  <div id="tr-region" style="display:none">
+    <div class="kpi-grid">
+      <div class="kpi"><div class="lbl">Total Regiones</div><div class="val">5</div><div class="sub">Centro, NOA, NEA, Cuyo, Sur</div></div>
+      <div class="kpi b"><div class="lbl">Monto Total</div><div class="val" id="trRegionTotalMonto">-</div><div class="sub">Ene + Feb 2026</div></div>
+      <div class="kpi g"><div class="lbl">Región Líder</div><div class="val" id="trRegionLider">-</div><div class="sub">Mayor tramitación</div></div>
+      <div class="kpi o"><div class="lbl">Concentración</div><div class="val" id="trRegionConcentracion">-</div><div class="sub">Top 2 regiones</div></div>
+    </div>
+    <div class="two-col">
+      <div class="section"><h2>🗺️ Distribución Regional - Monto</h2><div class="chart-wrap md"><canvas id="trRegionDistChart"></canvas></div></div>
+      <div class="section"><h2>📊 Cantidad por Región</h2><div class="chart-wrap md"><canvas id="trRegionCantChart"></canvas></div></div>
+    </div>
+    <div class="section">
+      <h2>📈 Comparativo Regional Enero vs Febrero - Tramitadas</h2>
+      <div class="chart-wrap xl"><canvas id="trRegionComparativo"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== EFECTIVIZADAS ===== -->
+<div class="tab-content" id="tab-efectivizadas">
+  <div class="subtabs">
+    <button class="subtab active" onclick="showSub('ef','enero',this)">Enero 2026</button>
+    <button class="subtab" onclick="showSub('ef','febrero',this)">Febrero 2026</button>
+    <button class="subtab" onclick="showSub('ef','garantia',this)">🔒 Por Garantía</button>
+    <button class="subtab" onclick="showSub('ef','linea',this)">📋 Por Línea</button>
+    <button class="subtab" onclick="showSub('ef','region',this)">🗺️ Por Región</button>
+  </div>
+  <div id="ef-enero">
+    <div class="kpi-grid">
+      <div class="kpi"><div class="lbl">Créditos Efectivizados</div><div class="val">110</div><div class="sub">Enero 2026</div></div>
+      <div class="kpi b"><div class="lbl">Monto Total</div><div class="val">$9.494M</div><div class="sub">Enero 2026</div></div>
+      <div class="kpi g"><div class="lbl">Provincias Activas</div><div class="val">22</div><div class="sub">de 23 provincias</div></div>
+      <div class="kpi o"><div class="lbl">Promedio por Crédito</div><div class="val">$86,3M</div><div class="sub">Enero 2026</div></div>
+    </div>
+    <div class="two-col">
+      <div class="section"><h2>🏦 Efectivizados por Provincia — Enero</h2><div class="chart-wrap md"><canvas id="efEnProv"></canvas></div></div>
+      <div class="section"><h2>📋 Efectivizados por Línea — Enero</h2><div class="chart-wrap md"><canvas id="efEnLinea"></canvas></div></div>
+    </div>
+    <div class="section"><h2>🔒 Efectivizados por Garantía — Enero (Top 10 por monto)</h2><div class="chart-wrap lg"><canvas id="efEnGar"></canvas></div></div>
+  </div>
+  <div id="ef-febrero" style="display:none">
+    <div class="kpi-grid">
+      <div class="kpi"><div class="lbl">Créditos Efectivizados</div><div class="val">71</div><div class="sub">Febrero 2026</div></div>
+      <div class="kpi b"><div class="lbl">Monto Total</div><div class="val">$5.354M</div><div class="sub">Febrero 2026</div></div>
+      <div class="kpi g"><div class="lbl">Provincias Activas</div><div class="val">16</div><div class="sub">de 23 provincias</div></div>
+      <div class="kpi o"><div class="lbl">Promedio por Crédito</div><div class="val">$75,4M</div><div class="sub">Febrero 2026</div></div>
+    </div>
+    <div class="two-col">
+      <div class="section"><h2>🏦 Efectivizados por Provincia — Febrero</h2><div class="chart-wrap md"><canvas id="efFebProv"></canvas></div></div>
+      <div class="section"><h2>📋 Efectivizados por Línea — Febrero</h2><div class="chart-wrap md"><canvas id="efFebLinea"></canvas></div></div>
+    </div>
+    <div class="section"><h2>🔒 Efectivizados por Garantía — Febrero (Top 10 por monto)</h2><div class="chart-wrap lg"><canvas id="efFebGar"></canvas></div></div>
+  </div>
+  
+  <!-- POR GARANTÍA -->
+  <div id="ef-garantia" style="display:none">
+    <div class="kpi-grid">
+      <div class="kpi"><div class="lbl">Total Garantías</div><div class="val" id="garTotalCant">-</div><div class="sub">Ene + Feb 2026</div></div>
+      <div class="kpi b"><div class="lbl">Monto Total</div><div class="val" id="garTotalMonto">-</div><div class="sub">Ene + Feb 2026</div></div>
+      <div class="kpi g"><div class="lbl">Garantía Principal</div><div class="val" id="garPrincipal">-</div><div class="sub">Mayor participación</div></div>
+      <div class="kpi o"><div class="lbl">SGR vs Fondos</div><div class="val" id="garTipo">-</div><div class="sub">Distribución</div></div>
+    </div>
+    <div class="two-col">
+      <div class="section"><h2>🔒 Distribución por Tipo de Garantía (Ene+Feb)</h2><div class="chart-wrap md"><canvas id="garTipoChart"></canvas></div></div>
+      <div class="section"><h2>📊 Top 10 Garantías por Monto</h2><div class="chart-wrap md"><canvas id="garTopChart"></canvas></div></div>
+    </div>
+    <div class="section">
+      <h2>📈 Comparativo Enero vs Febrero por Garantía</h2>
+      <div class="chart-wrap xl"><canvas id="garComparativo"></canvas></div>
+    </div>
+    <div class="section">
+      <h2>📋 Detalle Completo por Garantía</h2>
+      <div id="garTabla"></div>
+    </div>
+  </div>
+  
+  <!-- POR LÍNEA -->
+  <div id="ef-linea" style="display:none">
+    <div class="kpi-grid">
+      <div class="kpi"><div class="lbl">Total Líneas Activas</div><div class="val" id="lineaTotalCant">-</div><div class="sub">Ene + Feb 2026</div></div>
+      <div class="kpi b"><div class="lbl">Monto Total</div><div class="val" id="lineaTotalMonto">-</div><div class="sub">Ene + Feb 2026</div></div>
+      <div class="kpi g"><div class="lbl">Línea Principal</div><div class="val" id="lineaPrincipal">-</div><div class="sub">Mayor participación</div></div>
+      <div class="kpi o"><div class="lbl">Promedio por Línea</div><div class="val" id="lineaPromedio">-</div><div class="sub">Monto promedio</div></div>
+    </div>
+    <div class="two-col">
+      <div class="section"><h2>📋 Distribución por Línea de Crédito</h2><div class="chart-wrap md"><canvas id="lineaDistChart"></canvas></div></div>
+      <div class="section"><h2>💰 Monto por Línea (Ene+Feb)</h2><div class="chart-wrap md"><canvas id="lineaMontoChart"></canvas></div></div>
+    </div>
+    <div class="section">
+      <h2>📈 Evolución Enero vs Febrero por Línea</h2>
+      <div class="chart-wrap xl"><canvas id="lineaComparativo"></canvas></div>
+    </div>
+  </div>
+  
+  <!-- POR REGIÓN -->
+  <div id="ef-region" style="display:none">
+    <div class="kpi-grid">
+      <div class="kpi"><div class="lbl">Total Regiones</div><div class="val">5</div><div class="sub">Centro, NOA, NEA, Cuyo, Sur</div></div>
+      <div class="kpi b"><div class="lbl">Monto Total</div><div class="val" id="regionTotalMonto">-</div><div class="sub">Ene + Feb 2026</div></div>
+      <div class="kpi g"><div class="lbl">Región Líder</div><div class="val" id="regionLider">-</div><div class="sub">Mayor efectivización</div></div>
+      <div class="kpi o"><div class="lbl">Concentración</div><div class="val" id="regionConcentracion">-</div><div class="sub">Top 2 regiones</div></div>
+    </div>
+    <div class="two-col">
+      <div class="section"><h2>🗺️ Distribución Regional (Monto)</h2><div class="chart-wrap md"><canvas id="regionDistChart"></canvas></div></div>
+      <div class="section"><h2>📊 Cantidad por Región</h2><div class="chart-wrap md"><canvas id="regionCantChart"></canvas></div></div>
+    </div>
+    <div class="section">
+      <h2>📈 Comparativo Regional Enero vs Febrero</h2>
+      <div class="chart-wrap xl"><canvas id="regionComparativo"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== INTERANUAL ===== -->
+<div class="tab-content" id="tab-interanual">
+  <div class="subtabs">
+    <button class="subtab active" onclick="showSub('ia','tram',this)">Tramitadas</button>
+    <button class="subtab" onclick="showSub('ia','efec',this)">Efectivizadas</button>
+  </div>
+
+  <div id="ia-tram">
+    <div class="kpi-grid">
+      <div class="kpi g"><div class="lbl">Tramitadas 2026 (acum.)</div><div class="val">96</div><div class="sub">Ene + Feb</div></div>
+      <div class="kpi b"><div class="lbl">Monto 2026 (acum.)</div><div class="val">$7.027M</div><div class="sub">Ene + Feb</div></div>
+      <div class="kpi"><div class="lbl">Tramitadas 2025 (anual)</div><div class="val">1.508</div><div class="sub">Total año</div></div>
+      <div class="kpi b"><div class="lbl">Monto 2025 (anual)</div><div class="val">$111.857M</div><div class="sub">Total año</div></div>
+    </div>
+    <div class="section">
+      <h2>📊 Semáforo por Provincia — Tramitadas 2026 vs promedio mensual 2025</h2>
+      <p style="font-size:0.75rem;color:#888;margin-bottom:14px">Compara el acumulado 2026 (ene+feb) contra el promedio de 2 meses de 2025. 🟢 Por encima · 🟡 Dentro del rango · 🔴 Por debajo · ⚫ Sin datos</p>
+      <div class="semaforo-grid" id="semTram"></div>
+    </div>
+    <div class="section"><h2>📈 Monto Tramitado por Provincia — 2025 anual vs 2026 acumulado ($M)</h2><div class="chart-wrap xl"><canvas id="iaTramMonto"></canvas></div></div>
+    <div class="section"><h2>📊 Cantidad Tramitada por Provincia — 2025 anual vs 2026 acumulado</h2><div class="chart-wrap xl"><canvas id="iaTramCant"></canvas></div></div>
+  </div>
+
+  <div id="ia-efec" style="display:none">
+    <div class="kpi-grid">
+      <div class="kpi g"><div class="lbl">Efectivizadas 2026 (acum.)</div><div class="val">182</div><div class="sub">Ene + Feb</div></div>
+      <div class="kpi b"><div class="lbl">Monto 2026 (acum.)</div><div class="val">$15.628M</div><div class="sub">Ene + Feb</div></div>
+      <div class="kpi"><div class="lbl">Efectivizadas 2025 (anual)</div><div class="val">1.349</div><div class="sub">Total año</div></div>
+      <div class="kpi b"><div class="lbl">Monto 2025 (anual)</div><div class="val">$103.503M</div><div class="sub">Total año</div></div>
+    </div>
+    
+    <!-- RANKING DE PROVINCIAS -->
+    <div class="two-col">
+      <div class="section">
+        <h2>🏆 Top 5 — Mejor Desempeño (% de cumplimiento)</h2>
+        <div id="topProvincias"></div>
+      </div>
+      <div class="section">
+        <h2>⚠️ Bottom 5 — Necesitan Atención Urgente</h2>
+        <div id="bottomProvincias"></div>
+      </div>
+    </div>
+    
+    <div class="section">
+      <h2>📊 Semáforo por Provincia — Efectivizadas 2026 vs Meta Anual 2026</h2>
+      <p style="font-size:0.75rem;color:#888;margin-bottom:14px">Compara lo efectivizado (ene+feb) contra la meta anual completa. <strong>Umbrales ajustados para febrero (2/12 meses):</strong> 🟢 Adelantado (≥20%) · 🟡 En ritmo (10-20%) · 🔴 Atrasado (<10%) · ⚫ Sin meta. Incluye proyección anual al ritmo actual.</p>
+      <div class="semaforo-grid" id="semEfec"></div>
+    </div>
+    <div class="section"><h2>📈 Monto Efectivizado por Provincia — 2025 anual vs 2026 acumulado ($M)</h2><div class="chart-wrap xl"><canvas id="iaEfecMonto"></canvas></div></div>
+    <div class="section"><h2>📊 Cantidad Efectivizada por Provincia — 2025 anual vs 2026 acumulado</h2><div class="chart-wrap xl"><canvas id="iaEfecCant"></canvas></div></div>
+  </div>
+</div>
+
+</div>
+<footer>Consejo Federal de Inversiones · Financiamiento Productivo · Uso interno · Confidencial · Marzo 2026</footer>
+
+<script>
+const A='#1a2744',B='#2980b9',C='#27ae60',D='#e67e22',E='#8e44ad',F='#e74c3c',G='#95a5a6',H='#16a085';
+const PROVS=['BA','CA','CB','CS','ER','FO','HA','HU','JU','LP','LR','MI','MZ','NQ','RN','SA','SC','SE','SF','SJ','SL','TF','TU'];
+const PNAMES={BA:'Bs.Aires',CA:'Catamarca',CB:'Córdoba',CS:'Corrientes',ER:'E.Ríos',FO:'Formosa',HA:'Chaco',HU:'Chubut',JU:'Jujuy',LP:'L.Pampa',LR:'L.Rioja',MI:'Misiones',MZ:'Mendoza',NQ:'Neuquén',RN:'R.Negro',SA:'Salta',SC:'S.Cruz',SE:'Stgo.Estero',SF:'Santa Fe',SJ:'S.Juan',SL:'S.Luis',TF:'T.Fuego',TU:'Tucumán'};
+
+// ---- NAVIGATION ----
+function showNav(id,btn){
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  btn.classList.add('active');
+}
+function showSub(prefix,id,btn){
+  btn.parentElement.querySelectorAll('.subtab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  const wrap=document.getElementById('tab-'+{tr:'tramitadas',ef:'efectivizadas',ia:'interanual'}[prefix]);
+  wrap.querySelectorAll('[id^="'+prefix+'-"]').forEach(el=>el.style.display='none');
+  document.getElementById(prefix+'-'+id).style.display='block';
+  if(!window['_init_'+prefix+'_'+id]){window['_init_'+prefix+'_'+id]=true;initCharts(prefix+'_'+id);}
+}
+
+// ---- CHART HELPERS ----
+function sortedBar(id,labels,data,colors,horiz,moneyM){
+  const pairs=labels.map((l,i)=>({l,d:data[i],c:Array.isArray(colors)?colors[i]:colors}));
+  pairs.sort((a,b)=>b.d-a.d);
+  const ctx=document.getElementById(id);if(!ctx)return;
+  new Chart(ctx,{type:'bar',
+    data:{labels:pairs.map(p=>p.l),datasets:[{data:pairs.map(p=>p.d),backgroundColor:pairs.map(p=>p.c),borderRadius:5,label:''}]},
+    options:{responsive:true,indexAxis:horiz?'y':'x',
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>moneyM?'$'+c.raw.toFixed(1)+'M':c.raw}}},
+      scales:{
+        x:{grid:{display:!horiz,color:'#f0f0f0'},ticks:{font:{size:9},callback:v=>moneyM&&!horiz?'$'+v+'M':v}},
+        y:{grid:{display:horiz,color:'#f0f0f0'},ticks:{font:{size:9},callback:v=>moneyM&&horiz?'$'+v+'M':v}}
+      }}});
+}
+
+function groupedBar(id,labels,ds){
+  const ctx=document.getElementById(id);if(!ctx)return;
+  new Chart(ctx,{type:'bar',data:{labels,datasets:ds},
+    options:{responsive:true,plugins:{legend:{position:'top',labels:{font:{size:10},boxWidth:12}}},
+    scales:{x:{grid:{display:false},ticks:{font:{size:9}}},y:{grid:{color:'#f0f0f0'},ticks:{font:{size:9}}}}}});
+}
+
+function donut(id,labels,data){
+  const ctx=document.getElementById(id);if(!ctx)return;
+  new Chart(ctx,{type:'doughnut',
+    data:{labels,datasets:[{data,backgroundColor:[A,B,C,D,E,F,G,H,'#d35400','#1abc9c'],borderWidth:2,borderColor:'#fff'}]},
+    options:{cutout:'58%',plugins:{legend:{position:'right',labels:{font:{size:9},boxWidth:11}},
+    tooltip:{callbacks:{label:c=>c.label+': '+c.raw+'%'}}}}});
+}
+
+// ---- DATA ----
+const trEnRaw=[
+  ['SJ','PROGRAMATICA - VERDE',150,'GARANTIZAR','Cuyo+LP'],['NQ','PROGRAMATICA - MUJERES',192,'ACINDAR','Patagonia'],
+  ['BA','COMPETITIVIDAD PYME',100,'GARANTIZAR','Centro'],['MZ','PROGRAMATICA - MUJERES',70,'CUYO AVAL','Cuyo+LP'],
+  ['SL','PROGRAMATICA - MUJERES',100,'GARANTIZAR','Cuyo+LP'],['ER','PROGRAMATICA - MUJERES',199.9,'GARANTIZAR','Centro'],
+  ['BA','PROGRAMATICA - MUJERES',200,'GARANTIZAR','Centro'],['ER','COMPETITIVIDAD PYME',10,'FOGAER','Centro'],
+  ['BA','COMPETITIVIDAD PYME',100,'GARANTIZAR','Centro'],['ER','PROGRAMATICA - MUJERES',170,'FOGAER','Centro'],
+  ['BA','COMPETITIVIDAD PYME',100,'CASFOG','Centro'],['LR','COMPETITIVIDAD PYME',6,'FOGAPLAR','Cuyo+LP'],
+  ['ER','PROGRAMATICA - VERDE',200,'FOGAER','Centro'],['ER','COMPETITIVIDAD PYME',70,'FOGAER','Centro'],
+  ['SF','COMPETITIVIDAD PYME',100,'CASFOG','Centro'],['RN','COMPETITIVIDAD PYME',23,'FOGARIO','Patagonia'],
+  ['RN','PROGRAMATICA - MUJERES',40,'FOGARIO','Patagonia'],['TU','COMPETITIVIDAD PYME',80,'UNION','NOA'],
+  ['RN','PROGRAMATICA - VERDE',25,'FOGARIO','Patagonia'],['NQ','PROGRAMATICA - MUJERES',110,'HIPOTECA','Patagonia'],
+  ['JU','COMPETITIVIDAD PYME',50,'FOGAJUY','NOA'],['SA','PROGRAMATICA - MUJERES',10,'CASFOG','NOA'],
+  ['CS','COMPETITIVIDAD PYME',7,'FIANZA','NEA+SDE'],['BA','COMPETITIVIDAD PYME',85.3,'CASFOG','Centro'],
+  ['LP','COMPETITIVIDAD PYME',30,'FOGAPAM','Cuyo+LP'],['RN','PROGRAMATICA - VERDE',35,'FOGARIO','Patagonia'],
+  ['SE','COMPETITIVIDAD PYME',100,'GARANTIZAR','NEA+SDE'],['CB','PROGRAMATICA - VERDE',100,'AFFIDAVIT','Centro'],
+  ['CB','PROGRAMATICA - VERDE',75,'CAMPO AVAL','Centro'],['ER','TRIPLE IMPACTO - PROVEEDORES',150,'FOGAER','Centro'],
+  ['BA','COMPETITIVIDAD PYME',84.6,'CASFOG','Centro'],['BA','COMPETITIVIDAD PYME',100,'FOGABA','Centro'],
+  ['SL','PROGRAMATICA - MUJERES',14,'CASFOG','Cuyo+LP'],['SL','PROGRAMATICA - MUJERES',14,'CASFOG','Cuyo+LP'],
+  ['JU','COMPETITIVIDAD PYME',49,'FOGAJUY','NOA'],['BA','COMPETITIVIDAD PYME',100,'CASFOG','Centro'],
+  ['ER','TRIPLE IMPACTO - PROVEEDORES',30,'FOGAER','Centro'],['BA','PROGRAMATICA - MUJERES',80,'FOGABA','Centro'],
+  ['ER','COMPETITIVIDAD PYME',70,'FOGAER','Centro'],['LR','PROGRAMATICA - VERDE',80,'FOGAPLAR','Cuyo+LP'],
+  ['LR','PROGRAMATICA - VERDE',200,'GARANTIZAR','Cuyo+LP'],['HA','COMPETITIVIDAD PYME',12.5,'FOGACH','NEA+SDE'],
+  ['MI','COMPETITIVIDAD PYME',50,'FOGAMI','NEA+SDE'],['SL','COMPETITIVIDAD PYME',10,'FIANZA','Cuyo+LP'],
+  ['BA','PROGRAMATICA - VERDE',100,'GARANTIZAR','Centro'],['BA','PROGRAMATICA - MUJERES',65.5,'FOGABA','Centro'],
+  ['BA','PROGRAMATICA - MUJERES',52,'FOGABA','Centro'],['MI','COMPETITIVIDAD PYME',97,'CASFOG','NEA+SDE'],
+  ['BA','PROGRAMATICA - MUJERES',59.9,'CASFOG','Centro'],['BA','PROGRAMATICA - MUJERES',150,'FOGABA','Centro'],
+  ['SF','COMPETITIVIDAD PYME',100,'GARANTIZAR','Centro'],['BA','PROGRAMATICA - MUJERES',76.3,'CASFOG','Centro'],
+  ['LR','PROGRAMATICA - MUJERES',29.2,'FOGAPLAR','Cuyo+LP'],['CB','COMPETITIVIDAD PYME',100,'GARANTIZAR','Centro'],
+  ['HA','PROGRAMATICA - MUJERES',13,'FOGACH','NEA+SDE'],['SF','COMPETITIVIDAD PYME',100,'GARANTIZAR','Centro'],
+  ['BA','PROGRAMATICA - MUJERES',200,'ACINDAR','Centro'],['CB','PROGRAMATICA - MUJERES',19.7,'MOVIL','Centro'],
+  ['BA','COMPETITIVIDAD PYME',15,'FOGABA','Centro'],['BA','COMPETITIVIDAD PYME',100,'CASFOG','Centro'],
+  ['BA','PROGRAMATICA - MUJERES',152,'CASFOG','Centro'],['BA','PROGRAMATICA - VERDE',200,'ACINDAR','Centro']
+];
+
+const trFebRaw=[
+  ['RN','PROGRAMATICA - MUJERES',155,'GARANTIZAR','Patagonia'],['HA','PROGRAMATICA - MUJERES',12,'FOGACH','NEA+SDE'],
+  ['MI','PROGRAMATICA - MUJERES',10.3,'FOGAMI','NEA+SDE'],['HU','PROGRAMATICA - MUJERES',120,'GARANTIZAR','Patagonia'],
+  ['BA','PROGRAMATICA - MUJERES',60,'FOGABA','Centro'],['BA','PROGRAMATICA - MUJERES',50,'MOVIL','Centro'],
+  ['LP','COMPETITIVIDAD PYME',54.3,'FOGAPAM','Cuyo+LP'],['ER','TRIPLE IMPACTO - PROVEEDORES',7.3,'FOGAER','Centro'],
+  ['MZ','PROGRAMATICA - VERDE',200,'GARANTIZAR','Cuyo+LP'],['ER','PROGRAMATICA - MUJERES',129,'GARANTIZAR','Centro'],
+  ['ER','COMPETITIVIDAD PYME',100,'FOGAER','Centro'],['RN','PROGRAMATICA - MUJERES',15,'FOGARIO','Patagonia'],
+  ['SA','COMPETITIVIDAD PYME',100,'GARANTIZAR','NOA'],['SL','PROGRAMATICA - MUJERES',47.9,'GARANTIZAR','Cuyo+LP'],
+  ['MI','COMPETITIVIDAD PYME',100,'CASFOG','NEA+SDE'],['SL','COMPETITIVIDAD PYME',30,'GARANTIZAR','Cuyo+LP'],
+  ['CB','TRIPLE IMPACTO - SUSTENTABLES',80,'GARANTIZAR','Centro'],['CB','TRIPLE IMPACTO - SUSTENTABLES',46.6,'ACINDAR','Centro'],
+  ['NQ','PROGRAMATICA - MUJERES',17,'FOGANEU','Patagonia'],['LR','PROGRAMATICA - MUJERES',6,'FOGAPLAR','Cuyo+LP'],
+  ['RN','PROGRAMATICA - MUJERES',25,'FOGARIO','Patagonia'],['NQ','TRIPLE IMPACTO - PROVEEDORES',90,'GARANTIZAR','Patagonia'],
+  ['LP','PROGRAMATICA - MUJERES',40,'FOGAPAM','Cuyo+LP'],['SA','PROGRAMATICA - MUJERES',14.5,'CASFOG','NOA'],
+  ['SF','PROGRAMATICA - MUJERES',20,'CASFOG','Centro'],['SF','COMPETITIVIDAD PYME',85,'GARANTIZAR','Centro'],
+  ['BA','PROGRAMATICA - VERDE',195,'GARANTIZAR','Centro'],['BA','PROGRAMATICA - MUJERES',20,'FOGABA','Centro'],
+  ['BA','COMPETITIVIDAD PYME',15,'FOGABA','Centro'],['CB','COMPETITIVIDAD PYME',7.2,'CASFOG','Centro'],
+  ['TF','COMPETITIVIDAD PYME',20,'FOGADEF','Patagonia'],['TU','PROGRAMATICA - MUJERES',18,'CASFOG','NOA'],
+  ['CB','PROGRAMATICA - MUJERES',190,'GARANTIZAR','Centro'],['HA','COMPETITIVIDAD PYME',58.5,'FOGACH','NEA+SDE']
+];
+
+// VARIABLES AGREGADAS TRAMITADOS (se actualizan desde Google Sheets)
+const trEnProv = {};  // Se llena desde el sheet
+const trEnProvM = {}; // Se llena desde el sheet
+const trFebProv = {}; // Se llena desde el sheet
+const trFebProvM = {}; // Se llena desde el sheet
+const trEnLinea = {};  // Se llena desde el sheet
+const trFebLinea = {}; // Se llena desde el sheet
+const trEnGar = {};    // Se llena desde el sheet
+const trFebGar = {};   // Se llena desde el sheet
+
+
+const efEnProv={BA:10,CA:1,CB:15,CS:4,ER:7,FO:1,HA:5,HU:1,JU:9,LP:3,LR:4,MI:6,MZ:5,NQ:9,RN:7,SA:4,SC:1,SE:0,SF:9,SJ:2,SL:2,TF:2,TU:4};
+const efEnProvM={BA:1121,CA:124.7,CB:1912.785,CS:107,ER:752.771902,FO:4,HA:360,HU:20,JU:498,LP:249.728,LR:166,MI:408.3,MZ:628.5,NQ:744.0586,RN:320,SA:589,SC:143,SE:0,SF:966,SJ:31.091,SL:68,TF:160.139,TU:420.4};
+const efEnLinea={'CADENAS DE VALOR':{c:46,m:4349.6},'PROGRAMATICA - MUJERES':{c:27,m:2543},'FINANCIAMIENTO VERDE':{c:10,m:950.4},'MUJERES':{c:10,m:717.5},'COMPETITIVIDAD PYME':{c:16,m:773.9},'TRIPLE IMPACTO - RIEGO':{c:1,m:300},'PROGRAMATICA - VERDE':{c:1,m:160}};
+const efEnGar={GARANTIZAR:{c:32,m:3505.5},CASFOG:{c:14,m:1240.3},'ACINDAR PYMES':{c:6,m:814.7},'CUYO AVAL':{c:3,m:504},'FOGANEU':{c:6,m:372.1},'FOGAER':{c:4,m:443.1},'FOGABA':{c:5,m:421},'FOGAJUY':{c:6,m:270},'FOGAPAM':{c:3,m:249.7},'FOGARIO':{c:6,m:310}};
+
+const efFebProv={BA:20,CB:7,ER:5,HA:3,HU:2,JU:4,LP:2,LR:2,MI:2,MZ:5,RN:5,SE:1,SF:9,SL:2,TF:1,TU:1};
+const efFebProvM={BA:1867.63778,CB:609.693,ER:402.65,HA:37.5,HU:89.888,JU:249,LP:50,LR:229.222,MI:157,MZ:800,RN:307.54,SE:100,SF:795.6992,SL:28,TF:30,TU:80};
+const efFebLinea={'COMPETITIVIDAD PYME':{c:24,m:1884.5},'CADENAS DE VALOR':{c:11,m:984.9},'PROGRAMATICA - MUJERES':{c:18,m:1287.2},'PROGRAMATICA - VERDE':{c:9,m:896.6},'MUJERES':{c:6,m:325.7},'TRIPLE IMPACTO - RIEGO':{c:1,m:300},'FINANCIAMIENTO VERDE':{c:2,m:155}};
+const efFebGar={CASFOG:{c:17,m:1332.4},'FOGABA':{c:11,m:990.1},GARANTIZAR:{c:7,m:845},'ACINDAR PYMES':{c:5,m:640.2},'CUYO AVAL':{c:3,m:555},'FOGAER':{c:4,m:352.7},'FOGAJUY':{c:3,m:149},'FOGARIO':{c:4,m:123},'CAMPO AVAL':{c:2,m:125},'FOGAPAM':{c:2,m:50}};
+
+const hist25Tram={BA:223,CA:36,CB:148,CS:151,ER:195,FO:7,HA:63,HU:34,JU:46,LP:53,LR:108,MI:48,MZ:84,NQ:66,RN:30,SA:42,SC:1,SE:0,SF:185,SJ:17,SL:70,TF:41,TU:37};
+const hist25TramM={BA:21123.3,CA:2526.3,CB:13435.2,CS:9227.1,ER:10289,FO:504,HA:3014.3,HU:1624.7,JU:3210.9,LP:3287.1,LR:4186.6,MI:3262.1,MZ:8341.3,NQ:6142.1,RN:1908.5,SA:2684.5,SC:143,SE:0,SF:13018.1,SJ:1307.4,SL:3396,TF:2423.3,TU:3943.3};
+const hist25Efec={BA:196,CA:34,CB:128,CS:146,ER:183,FO:6,HA:58,HU:31,JU:32,LP:48,LR:104,MI:41,MZ:67,NQ:58,RN:21,SA:37,SC:0,SE:0,SF:165,SJ:13,SL:67,TF:38,TU:32};
+const hist25EfecM={BA:18539.6,CA:2376.6,CB:11087.4,CS:9047.6,ER:9043.5,FO:500,HA:2654.3,HU:1514.6,JU:2212.9,LP:2967.4,LR:4209.6,MI:2793.8,MZ:6332.1,NQ:5600,RN:1326,SA:1995.5,SC:0,SE:0,SF:11266.3,SJ:1101.9,SL:3228,TF:2233.1,TU:3472.9};
+
+// ---- METAS 2026 EFECTIVIZACIONES (millones de pesos - anuales) ----
+const metas2026Efec={BA:56830,SF:21510,CB:20755,ER:13066,MZ:11812,CS:10326,NQ:9053,SL:5743,LR:5373,MI:4435,HA:4334,TU:4310,LP:4206,SA:4143,TF:4118,RN:3565,HU:3527,JU:3430,CA:2937,SJ:2418,SE:1660,SC:1350,FO:1098};
+
+// ---- AGGREGATE ----
+function aggProv(raw){const r={};raw.forEach(([p,,m])=>{if(!r[p])r[p]={c:0,m:0};r[p].c++;r[p].m+=m;});return r;}
+function aggLinea(raw){const r={};raw.forEach(([,l,m])=>{if(!r[l])r[l]={c:0,m:0};r[l].c++;r[l].m+=m;});return r;}
+function aggGar(raw){const r={};raw.forEach(([,,m,g])=>{if(!r[g])r[g]={c:0,m:0};r[g].c++;r[g].m+=m;});return r;}
+function aggReg(raw){const r={};raw.forEach(([,,m,,reg])=>{if(!r[reg])r[reg]={c:0,m:0};r[reg].c++;r[reg].m+=m;});return r;}
+
+// label shortener
+function shortL(k){return k.replace('PROGRAMATICA - ','Prog.').replace('COMPETITIVIDAD ','Comp.').replace('TRIPLE IMPACTO - ','TI-').replace('CADENAS DE VALOR','Cad.Valor').replace('FINANCIAMIENTO VERDE','Fin.Verde');}
+
+const PAL=[A,B,C,D,E,F,G,H,'#d35400','#1abc9c','#8e44ad','#c0392b'];
+
+// ---- SEMAFORO ----
+function buildRanking(cant26, monto26){
+  // Calcular cumplimiento de todas las provincias
+  const rankings = [];
+  PROVS.forEach(p=>{
+    const meta = metas2026Efec[p];
+    const efec = monto26[p] || 0;
+    if(meta && efec > 0){
+      const cumplimiento = (efec / meta) * 100;
+      rankings.push({
+        prov: p,
+        nombre: PNAMES[p],
+        cumplimiento: cumplimiento,
+        efectivizado: efec,
+        meta: meta,
+        cantidad: cant26[p] || 0
+      });
+    }
+  });
+  
+  // Ordenar por cumplimiento
+  rankings.sort((a,b) => b.cumplimiento - a.cumplimiento);
+  
+  // Top 5
+  const top5 = rankings.slice(0, 5);
+  const topHTML = top5.map((r, i) => `
+    <div style="padding:10px;border-left:3px solid ${i===0?'#f39c12':'#27ae60'};background:#fafbfc;margin-bottom:8px;border-radius:6px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <span style="font-size:1.2rem;font-weight:800;color:#555;margin-right:8px">${i+1}</span>
+          <strong style="font-size:0.85rem">${r.nombre}</strong>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:1.1rem;font-weight:800;color:#27ae60">${r.cumplimiento.toFixed(1)}%</div>
+          <div style="font-size:0.68rem;color:#888">$${r.efectivizado.toFixed(0)}M de $${r.meta.toFixed(0)}M</div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+  
+  // Bottom 5
+  const bottom5 = rankings.slice(-5).reverse();
+  const bottomHTML = bottom5.map((r, i) => `
+    <div style="padding:10px;border-left:3px solid #e74c3c;background:#fff5f5;margin-bottom:8px;border-radius:6px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <span style="font-size:1.2rem;font-weight:800;color:#e74c3c;margin-right:8px">${rankings.length - i}</span>
+          <strong style="font-size:0.85rem">${r.nombre}</strong>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:1.1rem;font-weight:800;color:#e74c3c">${r.cumplimiento.toFixed(1)}%</div>
+          <div style="font-size:0.68rem;color:#888">$${r.efectivizado.toFixed(0)}M de $${r.meta.toFixed(0)}M</div>
+        </div>
+      </div>
+      <div style="font-size:0.7rem;color:#e74c3c;margin-top:4px">⚠️ Falta: $${(r.meta - r.efectivizado).toFixed(0)}M (${(100 - r.cumplimiento).toFixed(1)}%)</div>
+    </div>
+  `).join('');
+  
+  document.getElementById('topProvincias').innerHTML = topHTML;
+  document.getElementById('bottomProvincias').innerHTML = bottomHTML;
+}
+
+function buildSemaforo(containerId, cant26, monto26, cant25anual, monto25anual){
+  const container=document.getElementById(containerId);
+  if(!container)return;
+  container.innerHTML='';
+  
+  // UMBRALES DINÁMICOS - Ajustados para febrero (2 meses de 12)
+  const mesActual = 2; // Febrero
+  const esperadoPct = (mesActual / 12) * 100; // 16.7% esperado
+  const umbralVerde = esperadoPct * 1.2; // 20% = adelantado
+  const umbralAmarillo = esperadoPct * 0.6; // 10% = en ritmo mínimo
+  
+  // sort by monto26 desc
+  const sorted=PROVS.filter(p=>metas2026Efec[p]||cant26[p]).sort((a,b)=>(monto26[b]||0)-(monto26[a]||0));
+  sorted.forEach(p=>{
+    const c26=cant26[p]||0, m26=monto26[p]||0;
+    const objetivo=metas2026Efec[p]||0; // META ANUAL COMPLETA
+    
+    let cls='gris',icon='⚫',mensaje='Sin meta asignada',deltaHTML='';
+    
+    if(objetivo>0){
+      const efectivizado=m26;
+      const cumplimiento=(efectivizado/objetivo)*100;
+      const faltaPct=100-cumplimiento;
+      const faltaMonto=objetivo-efectivizado;
+      
+      // Clasificación con umbrales dinámicos
+      if(cumplimiento>=umbralVerde){
+        cls='verde';icon='🟢';
+        mensaje=`Adelantado · ${cumplimiento.toFixed(1)}%`;
+        deltaHTML=`Esperado: ${esperadoPct.toFixed(0)}% · Superás el ritmo`;
+      }
+      else if(cumplimiento>=umbralAmarillo){
+        cls='amarillo';icon='🟡';
+        mensaje=`En ritmo · ${cumplimiento.toFixed(1)}%`;
+        deltaHTML=`Falta ${faltaPct.toFixed(1)}% → $${faltaMonto.toFixed(0)}M`;
+      }
+      else if(cumplimiento>0){
+        cls='rojo';icon='🔴';
+        mensaje=`Atrasado · ${cumplimiento.toFixed(1)}%`;
+        deltaHTML=`Falta ${faltaPct.toFixed(1)}% → $${faltaMonto.toFixed(0)}M`;
+      }
+      else{
+        cls='gris';icon='⚫';
+        mensaje='Sin efectivizaciones';
+        deltaHTML='Meta: $'+objetivo.toFixed(0)+'M';
+      }
+      
+      // Proyección anual al ritmo actual
+      const proyeccionAnual = (efectivizado / mesActual) * 12;
+      const proyeccionPct = (proyeccionAnual / objetivo) * 100;
+      let proyeccionTxt = '';
+      if(cumplimiento > 0){
+        proyeccionTxt = `<div style="font-size:0.65rem;color:#aaa;margin-top:4px;padding-top:4px;border-top:1px solid rgba(255,255,255,0.1)">📈 Al ritmo actual: ${proyeccionPct.toFixed(0)}% anual ($${proyeccionAnual.toFixed(0)}M)</div>`;
+      }
+      
+      container.innerHTML+=`<div class="sem-card ${cls}">
+        <div class="sem-prov">${PNAMES[p]}</div>
+        <div class="sem-icon">${icon}</div>
+        <div style="font-size:0.75rem;font-weight:600;color:#555;margin:6px 0 8px;line-height:1.3">${mensaje}</div>
+        <div style="font-size:0.7rem;color:#666;line-height:1.4">
+          <strong>Objetivo:</strong> $${objetivo.toFixed(0)}M<br>
+          <strong>Efectivizado:</strong> $${efectivizado.toFixed(0)}M (${c26} créd.)<br>
+          ${deltaHTML?`<span style="font-weight:700;margin-top:4px;display:block;color:${cls==='verde'?'#27ae60':cls==='rojo'?'#e74c3c':'#f39c12'}">${deltaHTML}</span>`:''}
+          ${proyeccionTxt}
+        </div>
+      </div>`;
+    } else {
+      container.innerHTML+=`<div class="sem-card ${cls}">
+        <div class="sem-prov">${PNAMES[p]}</div>
+        <div class="sem-icon">${icon}</div>
+        <div style="font-size:0.75rem;font-weight:600;color:#888;margin:6px 0 8px">${mensaje}</div>
+        <div style="font-size:0.7rem;color:#888">2026: $${m26.toFixed(0)}M (${c26} créd.)</div>
+      </div>`;
+    }
+  });
+}
+
+// ---- INIT CHARTS ----
+function initCharts(key){
+  if(key==='tr_enero'){
+    const byP=aggProv(trEnRaw),byL=aggLinea(trEnRaw),byG=aggGar(trEnRaw),byR=aggReg(trEnRaw);
+    // region sorted
+    const rk=Object.keys(byR).sort((a,b)=>byR[b].m-byR[a].m);
+    sortedBar('trEnRegion',rk,rk.map(k=>+byR[k].m.toFixed(1)),PAL,false,true);
+    // linea cant sorted
+    const lk=Object.keys(byL).sort((a,b)=>byL[b].c-byL[a].c);
+    sortedBar('trEnLinea',lk.map(shortL),lk.map(k=>byL[k].c),PAL,true,false);
+    // garantia donut
+    const gk=Object.keys(byG).sort((a,b)=>byG[b].m-byG[a].m).slice(0,8);
+    const tot=gk.reduce((s,k)=>s+byG[k].m,0);
+    donut('trEnGar',gk,gk.map(k=>+((byG[k].m/tot)*100).toFixed(1)));
+    // linea monto
+    sortedBar('trEnLineaMonto',lk.map(shortL),lk.map(k=>+byL[k].m.toFixed(1)),PAL,false,true);
+    // prov sorted
+    const pk=Object.keys(byP).sort((a,b)=>byP[b].c-byP[a].c);
+    sortedBar('trEnProv',pk.map(p=>PNAMES[p]||p),pk.map(p=>byP[p].c),PAL,true,false);
+  }
+  if(key==='tr_febrero'){
+    const byP=aggProv(trFebRaw),byL=aggLinea(trFebRaw),byG=aggGar(trFebRaw),byR=aggReg(trFebRaw);
+    const rk=Object.keys(byR).sort((a,b)=>byR[b].m-byR[a].m);
+    sortedBar('trFebRegion',rk,rk.map(k=>+byR[k].m.toFixed(1)),PAL,false,true);
+    const lk=Object.keys(byL).sort((a,b)=>byL[b].c-byL[a].c);
+    sortedBar('trFebLinea',lk.map(shortL),lk.map(k=>byL[k].c),PAL,true,false);
+    const gk=Object.keys(byG).sort((a,b)=>byG[b].m-byG[a].m).slice(0,8);
+    const tot=gk.reduce((s,k)=>s+byG[k].m,0);
+    donut('trFebGar',gk,gk.map(k=>+((byG[k].m/tot)*100).toFixed(1)));
+    sortedBar('trFebLineaMonto',lk.map(shortL),lk.map(k=>+byL[k].m.toFixed(1)),PAL,false,true);
+    const pk=Object.keys(byP).sort((a,b)=>byP[b].c-byP[a].c);
+    sortedBar('trFebProv',pk.map(p=>PNAMES[p]||p),pk.map(p=>byP[p].c),PAL,true,false);
+  }
+  if(key==='tr_garantia'){
+    const trCombinado = [...trEnRaw, ...trFebRaw];
+    const byG = aggGar(trCombinado);
+    const totalCant = Object.values(byG).reduce((s,v)=>s+v.c,0);
+    const totalMonto = Object.values(byG).reduce((s,v)=>s+v.m,0);
+    const sortedGar = Object.keys(byG).sort((a,b)=>byG[b].m-byG[a].m);
+    
+    document.getElementById('trGarTotalCant').textContent = totalCant;
+    document.getElementById('trGarTotalMonto').textContent = '$'+totalMonto.toFixed(0)+'M';
+    document.getElementById('trGarPrincipal').textContent = sortedGar[0];
+    document.getElementById('trGarPromedio').textContent = '$'+(totalMonto/totalCant).toFixed(0)+'M';
+    
+    const top10 = sortedGar.slice(0,10);
+    sortedBar('trGarTopChart', top10, top10.map(g=>byG[g].m), PAL, false, true);
+    sortedBar('trGarCantChart', top10, top10.map(g=>byG[g].c), PAL, true, false);
+    
+    const byGEn = aggGar(trEnRaw);
+    const byGFeb = aggGar(trFebRaw);
+    const ctx = document.getElementById('trGarComparativo');
+    if(ctx) new Chart(ctx,{type:'bar',data:{labels:top10,datasets:[
+      {label:'Enero ($M)',data:top10.map(g=>(byGEn[g]?byGEn[g].m:0)),backgroundColor:A,borderRadius:3},
+      {label:'Febrero ($M)',data:top10.map(g=>(byGFeb[g]?byGFeb[g].m:0)),backgroundColor:B,borderRadius:3}
+    ]},options:{responsive:true,plugins:{legend:{position:'top'}},scales:{x:{grid:{display:false}},y:{ticks:{callback:v=>'$'+v+'M'}}}}});
+  }
+  if(key==='tr_linea'){
+    const trCombinado = [...trEnRaw, ...trFebRaw];
+    const byL = aggLinea(trCombinado);
+    const totalCant = Object.values(byL).reduce((s,v)=>s+v.c,0);
+    const totalMonto = Object.values(byL).reduce((s,v)=>s+v.m,0);
+    const sortedLinea = Object.keys(byL).sort((a,b)=>byL[b].m-byL[a].m);
+    
+    document.getElementById('trLineaTotalCant').textContent = sortedLinea.length;
+    document.getElementById('trLineaTotalMonto').textContent = '$'+totalMonto.toFixed(0)+'M';
+    document.getElementById('trLineaPrincipal').textContent = shortL(sortedLinea[0]);
+    document.getElementById('trLineaPromedio').textContent = '$'+(totalMonto/sortedLinea.length).toFixed(0)+'M';
+    
+    sortedBar('trLineaCantChart', sortedLinea.map(shortL), sortedLinea.map(l=>byL[l].c), PAL, true, false);
+    sortedBar('trLineaMontoChart', sortedLinea.map(shortL), sortedLinea.map(l=>byL[l].m), PAL, false, true);
+    
+    const byLEn = aggLinea(trEnRaw);
+    const byLFeb = aggLinea(trFebRaw);
+    const ctx = document.getElementById('trLineaComparativo');
+    if(ctx) new Chart(ctx,{type:'bar',data:{labels:sortedLinea.map(shortL),datasets:[
+      {label:'Enero ($M)',data:sortedLinea.map(l=>(byLEn[l]?byLEn[l].m:0)),backgroundColor:A,borderRadius:3},
+      {label:'Febrero ($M)',data:sortedLinea.map(l=>(byLFeb[l]?byLFeb[l].m:0)),backgroundColor:B,borderRadius:3}
+    ]},options:{responsive:true,plugins:{legend:{position:'top'}},scales:{x:{grid:{display:false}},y:{ticks:{callback:v=>'$'+v+'M'}}}}});
+  }
+  if(key==='tr_region'){
+    const trCombinado = [...trEnRaw, ...trFebRaw];
+    const byR = aggReg(trCombinado);
+    const totalMonto = Object.values(byR).reduce((s,v)=>s+v.m,0);
+    const totalCant = Object.values(byR).reduce((s,v)=>s+v.c,0);
+    const sortedReg = Object.keys(byR).sort((a,b)=>byR[b].m-byR[a].m);
+    const top2Pct = ((byR[sortedReg[0]].m + byR[sortedReg[1]].m) / totalMonto * 100).toFixed(0);
+    
+    document.getElementById('trRegionTotalMonto').textContent = '$'+totalMonto.toFixed(0)+'M';
+    document.getElementById('trRegionLider').textContent = sortedReg[0];
+    document.getElementById('trRegionConcentracion').textContent = top2Pct+'%';
+    
+    sortedBar('trRegionDistChart', sortedReg, sortedReg.map(r=>byR[r].m), PAL, false, true);
+    sortedBar('trRegionCantChart', sortedReg, sortedReg.map(r=>byR[r].c), PAL, true, false);
+    
+    const byREn = aggReg(trEnRaw);
+    const byRFeb = aggReg(trFebRaw);
+    const ctx = document.getElementById('trRegionComparativo');
+    if(ctx) new Chart(ctx,{type:'bar',data:{labels:sortedReg,datasets:[
+      {label:'Enero ($M)',data:sortedReg.map(r=>(byREn[r]?byREn[r].m:0)),backgroundColor:A,borderRadius:3},
+      {label:'Febrero ($M)',data:sortedReg.map(r=>(byRFeb[r]?byRFeb[r].m:0)),backgroundColor:B,borderRadius:3}
+    ]},options:{responsive:true,plugins:{legend:{position:'top'}},scales:{x:{grid:{display:false}},y:{ticks:{callback:v=>'$'+v+'M'}}}}});
+  }
+  if(key==='ef_enero'){
+    const pA=Object.keys(efEnProv).filter(p=>efEnProv[p]).sort((a,b)=>efEnProv[b]-efEnProv[a]);
+    sortedBar('efEnProv',pA.map(p=>PNAMES[p]),pA.map(p=>efEnProv[p]),PAL,true,false);
+    const lk=Object.keys(efEnLinea).sort((a,b)=>efEnLinea[b].c-efEnLinea[a].c);
+    sortedBar('efEnLinea',lk.map(shortL),lk.map(k=>efEnLinea[k].c),PAL,true,false);
+    const gk=Object.keys(efEnGar).sort((a,b)=>efEnGar[b].m-efEnGar[a].m).slice(0,10);
+    sortedBar('efEnGar',gk,gk.map(k=>efEnGar[k].m),PAL,true,true);
+  }
+  if(key==='ef_febrero'){
+    const pA=Object.keys(efFebProv).filter(p=>efFebProv[p]).sort((a,b)=>efFebProv[b]-efFebProv[a]);
+    sortedBar('efFebProv',pA.map(p=>PNAMES[p]||p),pA.map(p=>efFebProv[p]),PAL,true,false);
+    const lk=Object.keys(efFebLinea).sort((a,b)=>efFebLinea[b].c-efFebLinea[a].c);
+    sortedBar('efFebLinea',lk.map(shortL),lk.map(k=>efFebLinea[k].c),PAL,true,false);
+    const gk=Object.keys(efFebGar).sort((a,b)=>efFebGar[b].m-efFebGar[a].m).slice(0,10);
+    sortedBar('efFebGar',gk,gk.map(k=>efFebGar[k].m),PAL,true,true);
+  }
+  if(key==='ef_garantia'){
+    // Combinar datos de enero y febrero
+    const garCombinado = {};
+    Object.keys(efEnGar).forEach(g=>{
+      if(!garCombinado[g]) garCombinado[g]={c:0,m:0};
+      garCombinado[g].c += efEnGar[g].c;
+      garCombinado[g].m += efEnGar[g].m;
+    });
+    Object.keys(efFebGar).forEach(g=>{
+      if(!garCombinado[g]) garCombinado[g]={c:0,m:0};
+      garCombinado[g].c += efFebGar[g].c;
+      garCombinado[g].m += efFebGar[g].m;
+    });
+    
+    // KPIs
+    const totalCant = Object.values(garCombinado).reduce((s,v)=>s+v.c,0);
+    const totalMonto = Object.values(garCombinado).reduce((s,v)=>s+v.m,0);
+    const sortedGar = Object.keys(garCombinado).sort((a,b)=>garCombinado[b].m-garCombinado[a].m);
+    const principal = sortedGar[0];
+    
+    document.getElementById('garTotalCant').textContent = totalCant;
+    document.getElementById('garTotalMonto').textContent = '$'+totalMonto.toFixed(0)+'M';
+    document.getElementById('garPrincipal').textContent = principal;
+    
+    // Clasificar SGR vs Fondos vs Real
+    let sgrMonto=0, fondoMonto=0, realMonto=0;
+    Object.keys(garCombinado).forEach(g=>{
+      if(g.includes('FOGA') || g.includes('CUYO AVAL') || g.includes('GARANTIA')) fondoMonto += garCombinado[g].m;
+      else if(g==='PRENDA' || g==='HIPOTECA' || g==='FIANZA') realMonto += garCombinado[g].m;
+      else sgrMonto += garCombinado[g].m;
+    });
+    const sgrPct = Math.round(sgrMonto/totalMonto*100);
+    const fondoPct = Math.round(fondoMonto/totalMonto*100);
+    const realPct = Math.round(realMonto/totalMonto*100);
+    document.getElementById('garTipo').textContent = `${sgrPct}% SGR / ${fondoPct}% Fondos`;
+    
+    // Gráfico tipo de garantía (donut)
+    const ctxTipo = document.getElementById('garTipoChart');
+    if(ctxTipo) donut('garTipoChart', ['SGR', 'Fondos', 'Real'], [sgrPct, fondoPct, realPct]);
+    
+    // Gráfico top 10
+    const top10 = sortedGar.slice(0,10);
+    sortedBar('garTopChart', top10, top10.map(g=>garCombinado[g].m), PAL, false, true);
+    
+    // Comparativo ene vs feb
+    const ctx = document.getElementById('garComparativo');
+    if(ctx) new Chart(ctx,{type:'bar',data:{labels:top10,datasets:[
+      {label:'Enero ($M)',data:top10.map(g=>(efEnGar[g]?efEnGar[g].m:0)),backgroundColor:A,borderRadius:3},
+      {label:'Febrero ($M)',data:top10.map(g=>(efFebGar[g]?efFebGar[g].m:0)),backgroundColor:B,borderRadius:3}
+    ]},options:{responsive:true,plugins:{legend:{position:'top'}},scales:{x:{grid:{display:false}},y:{ticks:{callback:v=>'$'+v+'M'}}}}});
+    
+    // Tabla detalle
+    let tablaHTML = '<table><tr><th>Garantía</th><th class="r">Cantidad</th><th class="r">Monto Total</th><th class="r">% Part.</th></tr>';
+    sortedGar.forEach(g=>{
+      const pct = ((garCombinado[g].m / totalMonto) * 100).toFixed(1);
+      tablaHTML += `<tr><td>${g}</td><td class="r">${garCombinado[g].c}</td><td class="r">$${garCombinado[g].m.toFixed(1)}M</td><td class="r">${pct}%</td></tr>`;
+    });
+    tablaHTML += '</table>';
+    document.getElementById('garTabla').innerHTML = tablaHTML;
+  }
+  if(key==='ef_linea'){
+    // Combinar líneas
+    const lineaCombinado = {};
+    Object.keys(efEnLinea).forEach(l=>{
+      if(!lineaCombinado[l]) lineaCombinado[l]={c:0,m:0};
+      lineaCombinado[l].c += efEnLinea[l].c;
+      lineaCombinado[l].m += efEnLinea[l].m;
+    });
+    Object.keys(efFebLinea).forEach(l=>{
+      if(!lineaCombinado[l]) lineaCombinado[l]={c:0,m:0};
+      lineaCombinado[l].c += efFebLinea[l].c;
+      lineaCombinado[l].m += efFebLinea[l].m;
+    });
+    
+    const totalCant = Object.values(lineaCombinado).reduce((s,v)=>s+v.c,0);
+    const totalMonto = Object.values(lineaCombinado).reduce((s,v)=>s+v.m,0);
+    const sortedLinea = Object.keys(lineaCombinado).sort((a,b)=>lineaCombinado[b].m-lineaCombinado[a].m);
+    
+    document.getElementById('lineaTotalCant').textContent = sortedLinea.length;
+    document.getElementById('lineaTotalMonto').textContent = '$'+totalMonto.toFixed(0)+'M';
+    document.getElementById('lineaPrincipal').textContent = shortL(sortedLinea[0]);
+    document.getElementById('lineaPromedio').textContent = '$'+(totalMonto/sortedLinea.length).toFixed(0)+'M';
+    
+    // Gráfico de distribución (donut)
+    const pcts = sortedLinea.map(l=>+((lineaCombinado[l].m/totalMonto)*100).toFixed(1));
+    donut('lineaDistChart', sortedLinea.map(shortL), pcts);
+    
+    sortedBar('lineaMontoChart', sortedLinea.map(shortL), sortedLinea.map(l=>lineaCombinado[l].m), PAL, false, true);
+    
+    const ctx = document.getElementById('lineaComparativo');
+    if(ctx) new Chart(ctx,{type:'bar',data:{labels:sortedLinea.map(shortL),datasets:[
+      {label:'Enero ($M)',data:sortedLinea.map(l=>(efEnLinea[l]?efEnLinea[l].m:0)),backgroundColor:A,borderRadius:3},
+      {label:'Febrero ($M)',data:sortedLinea.map(l=>(efFebLinea[l]?efFebLinea[l].m:0)),backgroundColor:B,borderRadius:3}
+    ]},options:{responsive:true,plugins:{legend:{position:'top'}},scales:{x:{grid:{display:false}},y:{ticks:{callback:v=>'$'+v+'M'}}}}});
+  }
+  if(key==='ef_region'){
+    // Agrupar por región (necesitamos mapear provincias a regiones)
+    const regiones = {Centro:0,NOA:0,NEA:0,Cuyo:0,Sur:0};
+    const regionesCant = {Centro:0,NOA:0,NEA:0,Cuyo:0,Sur:0};
+    const regionesEne = {Centro:0,NOA:0,NEA:0,Cuyo:0,Sur:0};
+    const regionesFeb = {Centro:0,NOA:0,NEA:0,Cuyo:0,Sur:0};
+    const mapReg = {BA:'Centro',CB:'Centro',SF:'Centro',ER:'Centro',CA:'NOA',TU:'NOA',SA:'NOA',JU:'NOA',SE:'NEA',MZ:'Cuyo',SJ:'Cuyo',LR:'Cuyo',SL:'Cuyo',LP:'Cuyo',NQ:'Sur',RN:'Sur',HU:'Sur',SC:'Sur',TF:'Sur',HA:'NEA',MI:'NEA',CS:'NEA',FO:'NEA'};
+    
+    PROVS.forEach(p=>{
+      const reg = mapReg[p];
+      if(reg){
+        regiones[reg] += (efEnProvM[p]||0) + (efFebProvM[p]||0);
+        regionesCant[reg] += (efEnProv[p]||0) + (efFebProv[p]||0);
+        regionesEne[reg] += (efEnProvM[p]||0);
+        regionesFeb[reg] += (efFebProvM[p]||0);
+      }
+    });
+    
+    const totalMonto = Object.values(regiones).reduce((a,b)=>a+b,0);
+    const sortedReg = Object.keys(regiones).sort((a,b)=>regiones[b]-regiones[a]);
+    const top2Pct = ((regiones[sortedReg[0]] + regiones[sortedReg[1]]) / totalMonto * 100).toFixed(0);
+    
+    document.getElementById('regionTotalMonto').textContent = '$'+totalMonto.toFixed(0)+'M';
+    document.getElementById('regionLider').textContent = sortedReg[0];
+    document.getElementById('regionConcentracion').textContent = top2Pct+'%';
+    
+    sortedBar('regionDistChart', sortedReg, sortedReg.map(r=>regiones[r]), PAL, false, true);
+    sortedBar('regionCantChart', sortedReg, sortedReg.map(r=>regionesCant[r]), PAL, true, false);
+    
+    // Gráfico comparativo enero vs febrero
+    const ctx = document.getElementById('regionComparativo');
+    if(ctx) new Chart(ctx,{type:'bar',data:{labels:sortedReg,datasets:[
+      {label:'Enero ($M)',data:sortedReg.map(r=>regionesEne[r]),backgroundColor:A,borderRadius:3},
+      {label:'Febrero ($M)',data:sortedReg.map(r=>regionesFeb[r]),backgroundColor:B,borderRadius:3}
+    ]},options:{responsive:true,plugins:{legend:{position:'top'}},scales:{x:{grid:{display:false}},y:{ticks:{callback:v=>'$'+v+'M'}}}}});
+  }
+  if(key==='ia_tram'){
+    // acumulado 2026
+    const tr26=aggProv([...trEnRaw,...trFebRaw]);
+    // sorted by 2025 monto desc
+    const pAll=PROVS.filter(p=>hist25Tram[p]||tr26[p]).sort((a,b)=>(hist25TramM[b]||0)-(hist25TramM[a]||0));
+    const pNames=pAll.map(p=>PNAMES[p]);
+    // grouped monto
+    const ctx1=document.getElementById('iaTramMonto');
+    if(ctx1) new Chart(ctx1,{type:'bar',data:{labels:pNames,datasets:[
+      {label:'2025 anual ($M)',data:pAll.map(p=>+(hist25TramM[p]/1e3).toFixed(1)),backgroundColor:G+'cc',borderRadius:3},
+      {label:'2026 acum. ($M)',data:pAll.map(p=>tr26[p]?+(tr26[p].m).toFixed(1):0),backgroundColor:A,borderRadius:3}
+    ]},options:{responsive:true,plugins:{legend:{position:'top',labels:{font:{size:10},boxWidth:12}}},scales:{x:{grid:{display:false},ticks:{font:{size:9}}},y:{grid:{color:'#f0f0f0'},ticks:{font:{size:9},callback:v=>'$'+v+'M'}}}}});
+    // grouped cant
+    const ctx2=document.getElementById('iaTramCant');
+    if(ctx2) new Chart(ctx2,{type:'bar',data:{labels:pNames,datasets:[
+      {label:'2025 anual',data:pAll.map(p=>hist25Tram[p]||0),backgroundColor:G+'cc',borderRadius:3},
+      {label:'2026 acum.',data:pAll.map(p=>tr26[p]?tr26[p].c:0),backgroundColor:A,borderRadius:3}
+    ]},options:{responsive:true,plugins:{legend:{position:'top',labels:{font:{size:10},boxWidth:12}}},scales:{x:{grid:{display:false},ticks:{font:{size:9}}},y:{grid:{color:'#f0f0f0'},ticks:{font:{size:9}}}}}});
+    // semaforo
+    const tr26Cant={},tr26Monto={};
+    PROVS.forEach(p=>{tr26Cant[p]=tr26[p]?tr26[p].c:0;tr26Monto[p]=tr26[p]?tr26[p].m:0;});
+    buildSemaforo('semTram',tr26Cant,tr26Monto,hist25Tram,hist25TramM);
+  }
+  if(key==='ia_efec'){
+    const ef26Cant={},ef26Monto={};
+    PROVS.forEach(p=>{ef26Cant[p]=(efEnProv[p]||0)+(efFebProv[p]||0);ef26Monto[p]=(efEnProvM[p]||0)+(efFebProvM[p]||0);});
+    const pAll=PROVS.filter(p=>hist25Efec[p]||ef26Cant[p]).sort((a,b)=>(hist25EfecM[b]||0)-(hist25EfecM[a]||0));
+    const pNames=pAll.map(p=>PNAMES[p]);
+    
+    // Generar ranking
+    buildRanking(ef26Cant, ef26Monto);
+    
+    const ctx1=document.getElementById('iaEfecMonto');
+    if(ctx1) new Chart(ctx1,{type:'bar',data:{labels:pNames,datasets:[
+      {label:'2025 anual ($M)',data:pAll.map(p=>+(hist25EfecM[p]/1e3).toFixed(1)),backgroundColor:G+'cc',borderRadius:3},
+      {label:'2026 acum. ($M)',data:pAll.map(p=>+(ef26Monto[p]).toFixed(1)),backgroundColor:B,borderRadius:3}
+    ]},options:{responsive:true,plugins:{legend:{position:'top',labels:{font:{size:10},boxWidth:12}}},scales:{x:{grid:{display:false},ticks:{font:{size:9}}},y:{grid:{color:'#f0f0f0'},ticks:{font:{size:9},callback:v=>'$'+v+'M'}}}}});
+    const ctx2=document.getElementById('iaEfecCant');
+    if(ctx2) new Chart(ctx2,{type:'bar',data:{labels:pNames,datasets:[
+      {label:'2025 anual',data:pAll.map(p=>hist25Efec[p]||0),backgroundColor:G+'cc',borderRadius:3},
+      {label:'2026 acum.',data:pAll.map(p=>ef26Cant[p]||0),backgroundColor:B,borderRadius:3}
+    ]},options:{responsive:true,plugins:{legend:{position:'top',labels:{font:{size:10},boxWidth:12}}},scales:{x:{grid:{display:false},ticks:{font:{size:9}}},y:{grid:{color:'#f0f0f0'},ticks:{font:{size:9}}}}}});
+    buildSemaforo('semEfec',ef26Cant,ef26Monto,hist25Efec,hist25EfecM);
+  }
+}
+
+// ---- BOOT ----
+setTimeout(()=>{document.getElementById('progressFill').style.width='7.8%'},300);
+initCharts('tr_enero');
+window._init_tr_enero=true;
+
+// ============================================
+// GOOGLE SHEETS AUTO-SYNC (APPS SCRIPT - SIN CORS)
+// ============================================
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxy8omppzHAvNIK3pfxWpmZR1h2Bkq6hspScaRzVK2PD8KoV7XoivaaIKeIOvnbnXlj/exec';
+
+async function loadSheetData() {
+  const btn = document.getElementById('refreshBtn');
+  if(btn) btn.textContent = '⏳ Cargando...';
+  
+  try {
+    console.log('📊 Cargando datos desde Google Sheets (Apps Script)...');
+    
+    const response = await fetch(APPS_SCRIPT_URL);
+    const data = await response.json();
+    
+    console.log('✅ Datos recibidos:', data);
+    
+    parseAppsScriptData(data);
+    regenerateAllCharts();
+    
+    if(btn) {
+      btn.textContent = '✅ Actualizado!';
+      setTimeout(() => btn.textContent = '🔄 Actualizar Datos', 2000);
+    }
+    
+    console.log('✅ Informe actualizado desde Google Sheets!');
+    return true;
+  } catch (error) {
+    console.error('❌ Error cargando datos:', error);
+    if(btn) {
+      btn.textContent = '❌ Error';
+      setTimeout(() => btn.textContent = '🔄 Actualizar Datos', 2000);
+    }
+    alert('Error al cargar datos del Google Sheet.\n\nError: ' + error.message);
+    return false;
+  }
+}
+
+function parseAppsScriptData(data) {
+  console.log('🔍 Parseando datos de EFECTIVIZADOS...');
+  
+  const efectivizados = data.efectivizados;
+  if(!efectivizados || efectivizados.length === 0) {
+    console.error('No hay datos de EFECTIVIZADOS');
+    return;
+  }
+  
+  // Buscar fila de header
+  let headerRow = -1;
+  for(let i = 0; i < Math.min(10, efectivizados.length); i++) {
+    if(efectivizados[i][1] === 'PROVINCIA') {
+      headerRow = i;
+      break;
+    }
+  }
+  
+  if(headerRow === -1) {
+    console.error('No se encontró header PROVINCIA en EFECTIVIZADOS');
+    return;
+  }
+  
+  console.log('Header EFECTIVIZADOS encontrado en fila:', headerRow);
+  
+  // Parse data rows de EFECTIVIZADOS
+  for(let i = headerRow + 1; i < efectivizados.length; i++) {
+    const row = efectivizados[i];
+    const provincia = row[1]; // Columna B: PROVINCIA
+    
+    if(!provincia || provincia === 'TOTAL' || provincia === 'PROMEDIO') break;
+    
+    // Enero: cant (C), monto (D)
+    const enCant = parseInt(row[2]) || 0;
+    const enMonto = parseFloat(row[3]) || 0;
+    
+    // Febrero: cant (F), monto (G)
+    const febCant = parseInt(row[5]) || 0;
+    const febMonto = parseFloat(row[6]) || 0;
+    
+    // Actualizar si existe
+    if(efEnProv.hasOwnProperty(provincia)) {
+      efEnProv[provincia] = enCant;
+      efEnProvM[provincia] = enMonto / 1000000;
+      console.log(`✓ EF ${provincia} Ene: ${enCant} créd, $${(enMonto/1000000).toFixed(1)}M`);
+    }
+    if(efFebProv.hasOwnProperty(provincia)) {
+      efFebProv[provincia] = febCant;
+      efFebProvM[provincia] = febMonto / 1000000;
+      console.log(`✓ EF ${provincia} Feb: ${febCant} créd, $${(febMonto/1000000).toFixed(1)}M`);
+    }
+  }
+  
+  console.log('✅ Datos de EFECTIVIZADOS actualizados');
+  
+  // ========================================
+  // PARSEAR TRAMITADOS
+  // ========================================
+  console.log('🔍 Parseando datos de TRAMITADOS...');
+  
+  const tramitados = data.tramitados;
+  if(!tramitados || tramitados.length === 0) {
+    console.warn('⚠️ No hay datos de TRAMITADOS');
+    return;
+  }
+  
+  // SECCIÓN 1: PROVINCIAS (filas 2-30 aprox)
+  console.log('📍 Parseando PROVINCIAS...');
+  let trProvRow = -1;
+  for(let i = 0; i < Math.min(10, tramitados.length); i++) {
+    if(tramitados[i][1] === 'PROVINCIA') {
+      trProvRow = i;
+      break;
+    }
+  }
+  
+  if(trProvRow >= 0) {
+    // Limpiar variables
+    Object.keys(trEnProv).forEach(k => delete trEnProv[k]);
+    Object.keys(trEnProvM).forEach(k => delete trEnProvM[k]);
+    Object.keys(trFebProv).forEach(k => delete trFebProv[k]);
+    Object.keys(trFebProvM).forEach(k => delete trFebProvM[k]);
+    
+    for(let i = trProvRow + 1; i < tramitados.length; i++) {
+      const row = tramitados[i];
+      const provincia = row[1]; // Col B
+      
+      if(!provincia || provincia === 'TOTAL' || !row[2]) break;
+      
+      const enCant = parseInt(row[2]) || 0; // Col C: Enero cant
+      const enMonto = parseFloat(row[3]) || 0; // Col D: Enero monto
+      const febCant = parseInt(row[5]) || 0; // Col F: Feb cant
+      const febMonto = parseFloat(row[6]) || 0; // Col G: Feb monto
+      
+      trEnProv[provincia] = enCant;
+      trEnProvM[provincia] = enMonto / 1000000; // Convertir a millones
+      trFebProv[provincia] = febCant;
+      trFebProvM[provincia] = febMonto / 1000000;
+      
+      console.log(`✓ TR ${provincia}: Ene ${enCant}/$${(enMonto/1e6).toFixed(1)}M, Feb ${febCant}/$${(febMonto/1e6).toFixed(1)}M`);
+    }
+  }
+  
+  // SECCIÓN 2: LÍNEAS (fila 31+)
+  console.log('📋 Parseando LÍNEAS...');
+  let lineaRow = -1;
+  for(let i = 25; i < Math.min(40, tramitados.length); i++) {
+    const cellValue = tramitados[i][1] ? tramitados[i][1].toString().toUpperCase() : '';
+    if(cellValue.includes('LÍNEA') || cellValue.includes('LINEA')) {
+      lineaRow = i;
+      break;
+    }
+  }
+  
+  if(lineaRow >= 0) {
+    // Limpiar variables
+    Object.keys(trEnLinea).forEach(k => delete trEnLinea[k]);
+    Object.keys(trFebLinea).forEach(k => delete trFebLinea[k]);
+    
+    for(let i = lineaRow + 1; i < tramitados.length; i++) {
+      const row = tramitados[i];
+      const linea = row[1]; // Col B
+      
+      if(!linea || linea === 'TOTAL' || !row[2]) break;
+      
+      const enCant = parseInt(row[2]) || 0;
+      const enMonto = parseFloat(row[3]) || 0;
+      const febCant = parseInt(row[5]) || 0;
+      const febMonto = parseFloat(row[6]) || 0;
+      
+      trEnLinea[linea] = {c: enCant, m: enMonto / 1000000};
+      trFebLinea[linea] = {c: febCant, m: febMonto / 1000000};
+      
+      console.log(`✓ LÍNEA ${linea}: Ene ${enCant}/$${(enMonto/1e6).toFixed(1)}M, Feb ${febCant}/$${(febMonto/1e6).toFixed(1)}M`);
+    }
+  }
+  
+  // SECCIÓN 3: GARANTÍAS (fila 44+)
+  console.log('🔒 Parseando GARANTÍAS...');
+  let garRow = -1;
+  for(let i = 38; i < Math.min(55, tramitados.length); i++) {
+    const cellValue = tramitados[i][1] ? tramitados[i][1].toString().toUpperCase() : '';
+    if(cellValue.includes('GARANTÍA') || cellValue.includes('GARANTIA')) {
+      garRow = i;
+      break;
+    }
+  }
+  
+  if(garRow >= 0) {
+    // Limpiar variables
+    Object.keys(trEnGar).forEach(k => delete trEnGar[k]);
+    Object.keys(trFebGar).forEach(k => delete trFebGar[k]);
+    
+    for(let i = garRow + 1; i < tramitados.length; i++) {
+      const row = tramitados[i];
+      const garantia = row[1]; // Col B
+      
+      if(!garantia || garantia === 'TOTAL' || !row[2]) break;
+      
+      const enCant = parseInt(row[2]) || 0;
+      const enMonto = parseFloat(row[3]) || 0;
+      const febCant = parseInt(row[5]) || 0;
+      const febMonto = parseFloat(row[6]) || 0;
+      
+      trEnGar[garantia] = {c: enCant, m: enMonto / 1000000};
+      trFebGar[garantia] = {c: febCant, m: febMonto / 1000000};
+      
+      console.log(`✓ GARANTÍA ${garantia}: Ene ${enCant}/$${(enMonto/1e6).toFixed(1)}M, Feb ${febCant}/$${(febMonto/1e6).toFixed(1)}M`);
+    }
+  }
+  
+  console.log('✅ Datos de TRAMITADOS actualizados completamente');
+  console.log('📊 Total provincias Ene:', Object.keys(trEnProv).length);
+  console.log('📊 Total líneas Ene:', Object.keys(trEnLinea).length);
+  console.log('📊 Total garantías Ene:', Object.keys(trEnGar).length);
+}
+
+
+function regenerateAllCharts() {
+  // Limpiar flags de inicialización
+  Object.keys(window).forEach(key => {
+    if(key.startsWith('_init_')) delete window[key];
+  });
+  
+  // Recargar chart activo
+  const activeTab = document.querySelector('.nav-tab.active');
+  const activeSubtab = document.querySelector('.subtab.active');
+  
+  if(activeTab && activeSubtab) {
+    let prefix = '';
+    if(activeTab.textContent.includes('Tramitadas')) prefix = 'tr';
+    else if(activeTab.textContent.includes('Efectivizadas')) prefix = 'ef';
+    else if(activeTab.textContent.includes('Comparativo')) prefix = 'ia';
+    
+    if(prefix && activeSubtab.onclick) {
+      activeSubtab.click(); // Re-trigger para regenerar
+    }
+  }
+  
+  console.log('✅ Gráficos regenerados');
+}
+
+function refreshData() {
+  loadSheetData();
+}
+
+console.log('🚀 Google Sheets Sync (Apps Script) habilitado');
+console.log('📊 URL:', APPS_SCRIPT_URL);
+
+</script>
+</body>
+</html>
