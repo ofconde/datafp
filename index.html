@@ -123,7 +123,6 @@ footer{text-align:center;padding:18px;font-size:0.72rem;color:#aaa;border-top:1p
   </div>
   <div class="header-right">
     <div class="badge">ENE–FEB 2026</div>
-    <button class="btn" onclick="refreshData()" id="refreshBtn">🔄 Actualizar Datos</button>
     <button class="btn" onclick="window.print()">🖨️ Exportar PDF</button>
   </div>
 </header>
@@ -549,17 +548,6 @@ const trFebRaw=[
   ['CB','PROGRAMATICA - MUJERES',190,'GARANTIZAR','Centro'],['HA','COMPETITIVIDAD PYME',58.5,'FOGACH','NEA+SDE']
 ];
 
-// VARIABLES AGREGADAS TRAMITADOS (se actualizan desde Google Sheets)
-const trEnProv = {};  // Se llena desde el sheet
-const trEnProvM = {}; // Se llena desde el sheet
-const trFebProv = {}; // Se llena desde el sheet
-const trFebProvM = {}; // Se llena desde el sheet
-const trEnLinea = {};  // Se llena desde el sheet
-const trFebLinea = {}; // Se llena desde el sheet
-const trEnGar = {};    // Se llena desde el sheet
-const trFebGar = {};   // Se llena desde el sheet
-
-
 const efEnProv={BA:10,CA:1,CB:15,CS:4,ER:7,FO:1,HA:5,HU:1,JU:9,LP:3,LR:4,MI:6,MZ:5,NQ:9,RN:7,SA:4,SC:1,SE:0,SF:9,SJ:2,SL:2,TF:2,TU:4};
 const efEnProvM={BA:1121,CA:124.7,CB:1912.785,CS:107,ER:752.771902,FO:4,HA:360,HU:20,JU:498,LP:249.728,LR:166,MI:408.3,MZ:628.5,NQ:744.0586,RN:320,SA:589,SC:143,SE:0,SF:966,SJ:31.091,SL:68,TF:160.139,TU:420.4};
 const efEnLinea={'CADENAS DE VALOR':{c:46,m:4349.6},'PROGRAMATICA - MUJERES':{c:27,m:2543},'FINANCIAMIENTO VERDE':{c:10,m:950.4},'MUJERES':{c:10,m:717.5},'COMPETITIVIDAD PYME':{c:16,m:773.9},'TRIPLE IMPACTO - RIEGO':{c:1,m:300},'PROGRAMATICA - VERDE':{c:1,m:160}};
@@ -583,19 +571,6 @@ function aggProv(raw){const r={};raw.forEach(([p,,m])=>{if(!r[p])r[p]={c:0,m:0};
 function aggLinea(raw){const r={};raw.forEach(([,l,m])=>{if(!r[l])r[l]={c:0,m:0};r[l].c++;r[l].m+=m;});return r;}
 function aggGar(raw){const r={};raw.forEach(([,,m,g])=>{if(!r[g])r[g]={c:0,m:0};r[g].c++;r[g].m+=m;});return r;}
 function aggReg(raw){const r={};raw.forEach(([,,m,,reg])=>{if(!r[reg])r[reg]={c:0,m:0};r[reg].c++;r[reg].m+=m;});return r;}
-
-// Calcular regiones desde provincias agregadas
-function aggRegFromProv(provCant, provMonto){
-  const mapReg={BA:'Centro',CB:'Centro',SF:'Centro',ER:'Centro',CA:'NOA',TU:'NOA',SA:'NOA',JU:'NOA',SE:'NEA',MZ:'Cuyo',SJ:'Cuyo',LR:'Cuyo',SL:'Cuyo',LP:'Cuyo',NQ:'Sur',RN:'Sur',HU:'Sur',SC:'Sur',TF:'Sur',HA:'NEA',MI:'NEA',CS:'NEA',FO:'NEA'};
-  const r = {};
-  Object.keys(provCant).forEach(p => {
-    const reg = mapReg[p] || 'Otros';
-    if(!r[reg]) r[reg] = {c:0, m:0};
-    r[reg].c += provCant[p] || 0;
-    r[reg].m += provMonto[p] || 0;
-  });
-  return r;
-}
 
 // label shortener
 function shortL(k){return k.replace('PROGRAMATICA - ','Prog.').replace('COMPETITIVIDAD ','Comp.').replace('TRIPLE IMPACTO - ','TI-').replace('CADENAS DE VALOR','Cad.Valor').replace('FINANCIAMIENTO VERDE','Fin.Verde');}
@@ -744,158 +719,104 @@ function buildSemaforo(containerId, cant26, monto26, cant25anual, monto25anual){
 // ---- INIT CHARTS ----
 function initCharts(key){
   if(key==='tr_enero'){
-    // Usar datos directamente del Google Sheet
-    const byP = trEnProv; // Provincias: {BA: 20, CB: 4, ...}
-    const byL = trEnLinea; // Líneas: {COMPETITIVIDAD: {c:35, m:4.8}, ...}
-    const byG = trEnGar;   // Garantías: {GARANTIZAR: {c:40, m:5.2}, ...}
-    
-    // Region (calcular desde provincias)
-    const byR = aggRegFromProv(trEnProv, trEnProvM);
-    const rk = Object.keys(byR).sort((a,b)=>byR[b].m-byR[a].m);
+    const byP=aggProv(trEnRaw),byL=aggLinea(trEnRaw),byG=aggGar(trEnRaw),byR=aggReg(trEnRaw);
+    // region sorted
+    const rk=Object.keys(byR).sort((a,b)=>byR[b].m-byR[a].m);
     sortedBar('trEnRegion',rk,rk.map(k=>+byR[k].m.toFixed(1)),PAL,false,true);
-    
-    // Linea cant sorted
-    const lk = Object.keys(byL).sort((a,b)=>byL[b].c-byL[a].c);
+    // linea cant sorted
+    const lk=Object.keys(byL).sort((a,b)=>byL[b].c-byL[a].c);
     sortedBar('trEnLinea',lk.map(shortL),lk.map(k=>byL[k].c),PAL,true,false);
-    
-    // Garantia donut
-    const gk = Object.keys(byG).sort((a,b)=>byG[b].m-byG[a].m).slice(0,8);
-    const tot = gk.reduce((s,k)=>s+byG[k].m,0);
+    // garantia donut
+    const gk=Object.keys(byG).sort((a,b)=>byG[b].m-byG[a].m).slice(0,8);
+    const tot=gk.reduce((s,k)=>s+byG[k].m,0);
     donut('trEnGar',gk,gk.map(k=>+((byG[k].m/tot)*100).toFixed(1)));
-    
-    // Linea monto
+    // linea monto
     sortedBar('trEnLineaMonto',lk.map(shortL),lk.map(k=>+byL[k].m.toFixed(1)),PAL,false,true);
-    
-    // Prov sorted
-    const pk = Object.keys(byP).sort((a,b)=>byP[b]-byP[a]);
-    sortedBar('trEnProv',pk.map(p=>PNAMES[p]||p),pk.map(p=>byP[p]),PAL,true,false);
+    // prov sorted
+    const pk=Object.keys(byP).sort((a,b)=>byP[b].c-byP[a].c);
+    sortedBar('trEnProv',pk.map(p=>PNAMES[p]||p),pk.map(p=>byP[p].c),PAL,true,false);
   }
   if(key==='tr_febrero'){
-    // Usar datos directamente del Google Sheet
-    const byP = trFebProv;
-    const byL = trFebLinea;
-    const byG = trFebGar;
-    
-    // Region (calcular desde provincias)
-    const byR = aggRegFromProv(trFebProv, trFebProvM);
-    const rk = Object.keys(byR).sort((a,b)=>byR[b].m-byR[a].m);
+    const byP=aggProv(trFebRaw),byL=aggLinea(trFebRaw),byG=aggGar(trFebRaw),byR=aggReg(trFebRaw);
+    const rk=Object.keys(byR).sort((a,b)=>byR[b].m-byR[a].m);
     sortedBar('trFebRegion',rk,rk.map(k=>+byR[k].m.toFixed(1)),PAL,false,true);
-    
-    // Linea cant sorted
-    const lk = Object.keys(byL).sort((a,b)=>byL[b].c-byL[a].c);
+    const lk=Object.keys(byL).sort((a,b)=>byL[b].c-byL[a].c);
     sortedBar('trFebLinea',lk.map(shortL),lk.map(k=>byL[k].c),PAL,true,false);
-    
-    // Garantia donut
-    const gk = Object.keys(byG).sort((a,b)=>byG[b].m-byG[a].m).slice(0,8);
-    const tot = gk.reduce((s,k)=>s+byG[k].m,0);
+    const gk=Object.keys(byG).sort((a,b)=>byG[b].m-byG[a].m).slice(0,8);
+    const tot=gk.reduce((s,k)=>s+byG[k].m,0);
     donut('trFebGar',gk,gk.map(k=>+((byG[k].m/tot)*100).toFixed(1)));
-    
-    // Linea monto
     sortedBar('trFebLineaMonto',lk.map(shortL),lk.map(k=>+byL[k].m.toFixed(1)),PAL,false,true);
-    
-    // Prov sorted
-    const pk = Object.keys(byP).sort((a,b)=>byP[b]-byP[a]);
-    sortedBar('trFebProv',pk.map(p=>PNAMES[p]||p),pk.map(p=>byP[p]),PAL,true,false);
-  }
     const pk=Object.keys(byP).sort((a,b)=>byP[b].c-byP[a].c);
     sortedBar('trFebProv',pk.map(p=>PNAMES[p]||p),pk.map(p=>byP[p].c),PAL,true,false);
   }
   if(key==='tr_garantia'){
-    // Usar datos del Google Sheet directamente
-    const garCombinado = {};
-    
-    // Combinar enero y febrero
-    Object.keys(trEnGar).forEach(g => {
-      garCombinado[g] = {c: trEnGar[g].c, m: trEnGar[g].m};
-    });
-    Object.keys(trFebGar).forEach(g => {
-      if(!garCombinado[g]) garCombinado[g] = {c: 0, m: 0};
-      garCombinado[g].c += trFebGar[g].c;
-      garCombinado[g].m += trFebGar[g].m;
-    });
-    
-    const totalCant = Object.values(garCombinado).reduce((s,v)=>s+v.c,0);
-    const totalMonto = Object.values(garCombinado).reduce((s,v)=>s+v.m,0);
-    const sortedGar = Object.keys(garCombinado).sort((a,b)=>garCombinado[b].m-garCombinado[a].m);
+    const trCombinado = [...trEnRaw, ...trFebRaw];
+    const byG = aggGar(trCombinado);
+    const totalCant = Object.values(byG).reduce((s,v)=>s+v.c,0);
+    const totalMonto = Object.values(byG).reduce((s,v)=>s+v.m,0);
+    const sortedGar = Object.keys(byG).sort((a,b)=>byG[b].m-byG[a].m);
     
     document.getElementById('trGarTotalCant').textContent = totalCant;
     document.getElementById('trGarTotalMonto').textContent = '$'+totalMonto.toFixed(0)+'M';
-    document.getElementById('trGarPrincipal').textContent = sortedGar[0] || '-';
-    document.getElementById('trGarPromedio').textContent = totalCant > 0 ? '$'+(totalMonto/totalCant).toFixed(0)+'M' : '-';
+    document.getElementById('trGarPrincipal').textContent = sortedGar[0];
+    document.getElementById('trGarPromedio').textContent = '$'+(totalMonto/totalCant).toFixed(0)+'M';
     
     const top10 = sortedGar.slice(0,10);
-    sortedBar('trGarTopChart', top10, top10.map(g=>garCombinado[g].m), PAL, false, true);
-    sortedBar('trGarCantChart', top10, top10.map(g=>garCombinado[g].c), PAL, true, false);
+    sortedBar('trGarTopChart', top10, top10.map(g=>byG[g].m), PAL, false, true);
+    sortedBar('trGarCantChart', top10, top10.map(g=>byG[g].c), PAL, true, false);
     
+    const byGEn = aggGar(trEnRaw);
+    const byGFeb = aggGar(trFebRaw);
     const ctx = document.getElementById('trGarComparativo');
     if(ctx) new Chart(ctx,{type:'bar',data:{labels:top10,datasets:[
-      {label:'Enero ($M)',data:top10.map(g=>(trEnGar[g]?trEnGar[g].m:0)),backgroundColor:A,borderRadius:3},
-      {label:'Febrero ($M)',data:top10.map(g=>(trFebGar[g]?trFebGar[g].m:0)),backgroundColor:B,borderRadius:3}
+      {label:'Enero ($M)',data:top10.map(g=>(byGEn[g]?byGEn[g].m:0)),backgroundColor:A,borderRadius:3},
+      {label:'Febrero ($M)',data:top10.map(g=>(byGFeb[g]?byGFeb[g].m:0)),backgroundColor:B,borderRadius:3}
     ]},options:{responsive:true,plugins:{legend:{position:'top'}},scales:{x:{grid:{display:false}},y:{ticks:{callback:v=>'$'+v+'M'}}}}});
   }
   if(key==='tr_linea'){
-    // Usar datos del Google Sheet directamente
-    const lineaCombinado = {};
-    
-    // Combinar enero y febrero
-    Object.keys(trEnLinea).forEach(l => {
-      lineaCombinado[l] = {c: trEnLinea[l].c, m: trEnLinea[l].m};
-    });
-    Object.keys(trFebLinea).forEach(l => {
-      if(!lineaCombinado[l]) lineaCombinado[l] = {c: 0, m: 0};
-      lineaCombinado[l].c += trFebLinea[l].c;
-      lineaCombinado[l].m += trFebLinea[l].m;
-    });
-    
-    const totalCant = Object.values(lineaCombinado).reduce((s,v)=>s+v.c,0);
-    const totalMonto = Object.values(lineaCombinado).reduce((s,v)=>s+v.m,0);
-    const sortedLinea = Object.keys(lineaCombinado).sort((a,b)=>lineaCombinado[b].m-lineaCombinado[a].m);
+    const trCombinado = [...trEnRaw, ...trFebRaw];
+    const byL = aggLinea(trCombinado);
+    const totalCant = Object.values(byL).reduce((s,v)=>s+v.c,0);
+    const totalMonto = Object.values(byL).reduce((s,v)=>s+v.m,0);
+    const sortedLinea = Object.keys(byL).sort((a,b)=>byL[b].m-byL[a].m);
     
     document.getElementById('trLineaTotalCant').textContent = sortedLinea.length;
     document.getElementById('trLineaTotalMonto').textContent = '$'+totalMonto.toFixed(0)+'M';
-    document.getElementById('trLineaPrincipal').textContent = sortedLinea[0] ? shortL(sortedLinea[0]) : '-';
-    document.getElementById('trLineaPromedio').textContent = sortedLinea.length > 0 ? '$'+(totalMonto/sortedLinea.length).toFixed(0)+'M' : '-';
+    document.getElementById('trLineaPrincipal').textContent = shortL(sortedLinea[0]);
+    document.getElementById('trLineaPromedio').textContent = '$'+(totalMonto/sortedLinea.length).toFixed(0)+'M';
     
-    sortedBar('trLineaCantChart', sortedLinea.map(shortL), sortedLinea.map(l=>lineaCombinado[l].c), PAL, true, false);
-    sortedBar('trLineaMontoChart', sortedLinea.map(shortL), sortedLinea.map(l=>lineaCombinado[l].m), PAL, false, true);
+    sortedBar('trLineaCantChart', sortedLinea.map(shortL), sortedLinea.map(l=>byL[l].c), PAL, true, false);
+    sortedBar('trLineaMontoChart', sortedLinea.map(shortL), sortedLinea.map(l=>byL[l].m), PAL, false, true);
     
+    const byLEn = aggLinea(trEnRaw);
+    const byLFeb = aggLinea(trFebRaw);
     const ctx = document.getElementById('trLineaComparativo');
     if(ctx) new Chart(ctx,{type:'bar',data:{labels:sortedLinea.map(shortL),datasets:[
-      {label:'Enero ($M)',data:sortedLinea.map(l=>(trEnLinea[l]?trEnLinea[l].m:0)),backgroundColor:A,borderRadius:3},
-      {label:'Febrero ($M)',data:sortedLinea.map(l=>(trFebLinea[l]?trFebLinea[l].m:0)),backgroundColor:B,borderRadius:3}
+      {label:'Enero ($M)',data:sortedLinea.map(l=>(byLEn[l]?byLEn[l].m:0)),backgroundColor:A,borderRadius:3},
+      {label:'Febrero ($M)',data:sortedLinea.map(l=>(byLFeb[l]?byLFeb[l].m:0)),backgroundColor:B,borderRadius:3}
     ]},options:{responsive:true,plugins:{legend:{position:'top'}},scales:{x:{grid:{display:false}},y:{ticks:{callback:v=>'$'+v+'M'}}}}});
   }
   if(key==='tr_region'){
-    // Calcular regiones desde provincias
-    const regionesEne = aggRegFromProv(trEnProv, trEnProvM);
-    const regionesFeb = aggRegFromProv(trFebProv, trFebProvM);
-    
-    // Combinar
-    const regiones = {};
-    Object.keys(regionesEne).forEach(r => {
-      regiones[r] = {c: regionesEne[r].c, m: regionesEne[r].m};
-    });
-    Object.keys(regionesFeb).forEach(r => {
-      if(!regiones[r]) regiones[r] = {c: 0, m: 0};
-      regiones[r].c += regionesFeb[r].c;
-      regiones[r].m += regionesFeb[r].m;
-    });
-    
-    const totalMonto = Object.values(regiones).reduce((s,v)=>s+v.m,0);
-    const sortedReg = Object.keys(regiones).sort((a,b)=>regiones[b].m-regiones[a].m);
-    const top2Pct = sortedReg.length >= 2 ? ((regiones[sortedReg[0]].m + regiones[sortedReg[1]].m) / totalMonto * 100).toFixed(0) : '100';
+    const trCombinado = [...trEnRaw, ...trFebRaw];
+    const byR = aggReg(trCombinado);
+    const totalMonto = Object.values(byR).reduce((s,v)=>s+v.m,0);
+    const totalCant = Object.values(byR).reduce((s,v)=>s+v.c,0);
+    const sortedReg = Object.keys(byR).sort((a,b)=>byR[b].m-byR[a].m);
+    const top2Pct = ((byR[sortedReg[0]].m + byR[sortedReg[1]].m) / totalMonto * 100).toFixed(0);
     
     document.getElementById('trRegionTotalMonto').textContent = '$'+totalMonto.toFixed(0)+'M';
-    document.getElementById('trRegionLider').textContent = sortedReg[0] || '-';
+    document.getElementById('trRegionLider').textContent = sortedReg[0];
     document.getElementById('trRegionConcentracion').textContent = top2Pct+'%';
     
-    sortedBar('trRegionDistChart', sortedReg, sortedReg.map(r=>regiones[r].m), PAL, false, true);
-    sortedBar('trRegionCantChart', sortedReg, sortedReg.map(r=>regiones[r].c), PAL, true, false);
+    sortedBar('trRegionDistChart', sortedReg, sortedReg.map(r=>byR[r].m), PAL, false, true);
+    sortedBar('trRegionCantChart', sortedReg, sortedReg.map(r=>byR[r].c), PAL, true, false);
     
+    const byREn = aggReg(trEnRaw);
+    const byRFeb = aggReg(trFebRaw);
     const ctx = document.getElementById('trRegionComparativo');
     if(ctx) new Chart(ctx,{type:'bar',data:{labels:sortedReg,datasets:[
-      {label:'Enero ($M)',data:sortedReg.map(r=>(regionesEne[r]?regionesEne[r].m:0)),backgroundColor:A,borderRadius:3},
-      {label:'Febrero ($M)',data:sortedReg.map(r=>(regionesFeb[r]?regionesFeb[r].m:0)),backgroundColor:B,borderRadius:3}
+      {label:'Enero ($M)',data:sortedReg.map(r=>(byREn[r]?byREn[r].m:0)),backgroundColor:A,borderRadius:3},
+      {label:'Febrero ($M)',data:sortedReg.map(r=>(byRFeb[r]?byRFeb[r].m:0)),backgroundColor:B,borderRadius:3}
     ]},options:{responsive:true,plugins:{legend:{position:'top'}},scales:{x:{grid:{display:false}},y:{ticks:{callback:v=>'$'+v+'M'}}}}});
   }
   if(key==='ef_enero'){
@@ -1095,254 +1016,6 @@ function initCharts(key){
 setTimeout(()=>{document.getElementById('progressFill').style.width='7.8%'},300);
 initCharts('tr_enero');
 window._init_tr_enero=true;
-
-// ============================================
-// GOOGLE SHEETS AUTO-SYNC (APPS SCRIPT - SIN CORS)
-// ============================================
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxy8omppzHAvNIK3pfxWpmZR1h2Bkq6hspScaRzVK2PD8KoV7XoivaaIKeIOvnbnXlj/exec';
-
-async function loadSheetData() {
-  const btn = document.getElementById('refreshBtn');
-  if(btn) btn.textContent = '⏳ Cargando...';
-  
-  try {
-    console.log('📊 Cargando datos desde Google Sheets (Apps Script)...');
-    
-    const response = await fetch(APPS_SCRIPT_URL);
-    const data = await response.json();
-    
-    console.log('✅ Datos recibidos:', data);
-    
-    parseAppsScriptData(data);
-    regenerateAllCharts();
-    
-    if(btn) {
-      btn.textContent = '✅ Actualizado!';
-      setTimeout(() => btn.textContent = '🔄 Actualizar Datos', 2000);
-    }
-    
-    console.log('✅ Informe actualizado desde Google Sheets!');
-    return true;
-  } catch (error) {
-    console.error('❌ Error cargando datos:', error);
-    if(btn) {
-      btn.textContent = '❌ Error';
-      setTimeout(() => btn.textContent = '🔄 Actualizar Datos', 2000);
-    }
-    alert('Error al cargar datos del Google Sheet.\n\nError: ' + error.message);
-    return false;
-  }
-}
-
-function parseAppsScriptData(data) {
-  console.log('🔍 Parseando datos de EFECTIVIZADOS...');
-  
-  const efectivizados = data.efectivizados;
-  if(!efectivizados || efectivizados.length === 0) {
-    console.error('No hay datos de EFECTIVIZADOS');
-    return;
-  }
-  
-  // Buscar fila de header
-  let headerRow = -1;
-  for(let i = 0; i < Math.min(10, efectivizados.length); i++) {
-    if(efectivizados[i][1] === 'PROVINCIA') {
-      headerRow = i;
-      break;
-    }
-  }
-  
-  if(headerRow === -1) {
-    console.error('No se encontró header PROVINCIA en EFECTIVIZADOS');
-    return;
-  }
-  
-  console.log('Header EFECTIVIZADOS encontrado en fila:', headerRow);
-  
-  // Parse data rows de EFECTIVIZADOS
-  for(let i = headerRow + 1; i < efectivizados.length; i++) {
-    const row = efectivizados[i];
-    const provincia = row[1]; // Columna B: PROVINCIA
-    
-    if(!provincia || provincia === 'TOTAL' || provincia === 'PROMEDIO') break;
-    
-    // Enero: cant (C), monto (D)
-    const enCant = parseInt(row[2]) || 0;
-    const enMonto = parseFloat(row[3]) || 0;
-    
-    // Febrero: cant (F), monto (G)
-    const febCant = parseInt(row[5]) || 0;
-    const febMonto = parseFloat(row[6]) || 0;
-    
-    // Actualizar si existe
-    if(efEnProv.hasOwnProperty(provincia)) {
-      efEnProv[provincia] = enCant;
-      efEnProvM[provincia] = enMonto / 1000000;
-      console.log(`✓ EF ${provincia} Ene: ${enCant} créd, $${(enMonto/1000000).toFixed(1)}M`);
-    }
-    if(efFebProv.hasOwnProperty(provincia)) {
-      efFebProv[provincia] = febCant;
-      efFebProvM[provincia] = febMonto / 1000000;
-      console.log(`✓ EF ${provincia} Feb: ${febCant} créd, $${(febMonto/1000000).toFixed(1)}M`);
-    }
-  }
-  
-  console.log('✅ Datos de EFECTIVIZADOS actualizados');
-  
-  // ========================================
-  // PARSEAR TRAMITADOS
-  // ========================================
-  console.log('🔍 Parseando datos de TRAMITADOS...');
-  
-  const tramitados = data.tramitados;
-  if(!tramitados || tramitados.length === 0) {
-    console.warn('⚠️ No hay datos de TRAMITADOS');
-    return;
-  }
-  
-  // SECCIÓN 1: PROVINCIAS (filas 2-30 aprox)
-  console.log('📍 Parseando PROVINCIAS...');
-  let trProvRow = -1;
-  for(let i = 0; i < Math.min(10, tramitados.length); i++) {
-    if(tramitados[i][1] === 'PROVINCIA') {
-      trProvRow = i;
-      break;
-    }
-  }
-  
-  if(trProvRow >= 0) {
-    // Limpiar variables
-    Object.keys(trEnProv).forEach(k => delete trEnProv[k]);
-    Object.keys(trEnProvM).forEach(k => delete trEnProvM[k]);
-    Object.keys(trFebProv).forEach(k => delete trFebProv[k]);
-    Object.keys(trFebProvM).forEach(k => delete trFebProvM[k]);
-    
-    for(let i = trProvRow + 1; i < tramitados.length; i++) {
-      const row = tramitados[i];
-      const provincia = row[1]; // Col B
-      
-      if(!provincia || provincia === 'TOTAL' || !row[2]) break;
-      
-      const enCant = parseInt(row[2]) || 0; // Col C: Enero cant
-      const enMonto = parseFloat(row[3]) || 0; // Col D: Enero monto
-      const febCant = parseInt(row[5]) || 0; // Col F: Feb cant
-      const febMonto = parseFloat(row[6]) || 0; // Col G: Feb monto
-      
-      trEnProv[provincia] = enCant;
-      trEnProvM[provincia] = enMonto / 1000000; // Convertir a millones
-      trFebProv[provincia] = febCant;
-      trFebProvM[provincia] = febMonto / 1000000;
-      
-      console.log(`✓ TR ${provincia}: Ene ${enCant}/$${(enMonto/1e6).toFixed(1)}M, Feb ${febCant}/$${(febMonto/1e6).toFixed(1)}M`);
-    }
-  }
-  
-  // SECCIÓN 2: LÍNEAS (fila 31+)
-  console.log('📋 Parseando LÍNEAS...');
-  let lineaRow = -1;
-  for(let i = 25; i < Math.min(40, tramitados.length); i++) {
-    const cellValue = tramitados[i][1] ? tramitados[i][1].toString().toUpperCase() : '';
-    if(cellValue.includes('LÍNEA') || cellValue.includes('LINEA')) {
-      lineaRow = i;
-      break;
-    }
-  }
-  
-  if(lineaRow >= 0) {
-    // Limpiar variables
-    Object.keys(trEnLinea).forEach(k => delete trEnLinea[k]);
-    Object.keys(trFebLinea).forEach(k => delete trFebLinea[k]);
-    
-    for(let i = lineaRow + 1; i < tramitados.length; i++) {
-      const row = tramitados[i];
-      const linea = row[1]; // Col B
-      
-      if(!linea || linea === 'TOTAL' || !row[2]) break;
-      
-      const enCant = parseInt(row[2]) || 0;
-      const enMonto = parseFloat(row[3]) || 0;
-      const febCant = parseInt(row[5]) || 0;
-      const febMonto = parseFloat(row[6]) || 0;
-      
-      trEnLinea[linea] = {c: enCant, m: enMonto / 1000000};
-      trFebLinea[linea] = {c: febCant, m: febMonto / 1000000};
-      
-      console.log(`✓ LÍNEA ${linea}: Ene ${enCant}/$${(enMonto/1e6).toFixed(1)}M, Feb ${febCant}/$${(febMonto/1e6).toFixed(1)}M`);
-    }
-  }
-  
-  // SECCIÓN 3: GARANTÍAS (fila 44+)
-  console.log('🔒 Parseando GARANTÍAS...');
-  let garRow = -1;
-  for(let i = 38; i < Math.min(55, tramitados.length); i++) {
-    const cellValue = tramitados[i][1] ? tramitados[i][1].toString().toUpperCase() : '';
-    if(cellValue.includes('GARANTÍA') || cellValue.includes('GARANTIA')) {
-      garRow = i;
-      break;
-    }
-  }
-  
-  if(garRow >= 0) {
-    // Limpiar variables
-    Object.keys(trEnGar).forEach(k => delete trEnGar[k]);
-    Object.keys(trFebGar).forEach(k => delete trFebGar[k]);
-    
-    for(let i = garRow + 1; i < tramitados.length; i++) {
-      const row = tramitados[i];
-      const garantia = row[1]; // Col B
-      
-      if(!garantia || garantia === 'TOTAL' || !row[2]) break;
-      
-      const enCant = parseInt(row[2]) || 0;
-      const enMonto = parseFloat(row[3]) || 0;
-      const febCant = parseInt(row[5]) || 0;
-      const febMonto = parseFloat(row[6]) || 0;
-      
-      trEnGar[garantia] = {c: enCant, m: enMonto / 1000000};
-      trFebGar[garantia] = {c: febCant, m: febMonto / 1000000};
-      
-      console.log(`✓ GARANTÍA ${garantia}: Ene ${enCant}/$${(enMonto/1e6).toFixed(1)}M, Feb ${febCant}/$${(febMonto/1e6).toFixed(1)}M`);
-    }
-  }
-  
-  console.log('✅ Datos de TRAMITADOS actualizados completamente');
-  console.log('📊 Total provincias Ene:', Object.keys(trEnProv).length);
-  console.log('📊 Total líneas Ene:', Object.keys(trEnLinea).length);
-  console.log('📊 Total garantías Ene:', Object.keys(trEnGar).length);
-}
-
-
-function regenerateAllCharts() {
-  // Limpiar flags de inicialización
-  Object.keys(window).forEach(key => {
-    if(key.startsWith('_init_')) delete window[key];
-  });
-  
-  // Recargar chart activo
-  const activeTab = document.querySelector('.nav-tab.active');
-  const activeSubtab = document.querySelector('.subtab.active');
-  
-  if(activeTab && activeSubtab) {
-    let prefix = '';
-    if(activeTab.textContent.includes('Tramitadas')) prefix = 'tr';
-    else if(activeTab.textContent.includes('Efectivizadas')) prefix = 'ef';
-    else if(activeTab.textContent.includes('Comparativo')) prefix = 'ia';
-    
-    if(prefix && activeSubtab.onclick) {
-      activeSubtab.click(); // Re-trigger para regenerar
-    }
-  }
-  
-  console.log('✅ Gráficos regenerados');
-}
-
-function refreshData() {
-  loadSheetData();
-}
-
-console.log('🚀 Google Sheets Sync (Apps Script) habilitado');
-console.log('📊 URL:', APPS_SCRIPT_URL);
-
 </script>
 </body>
 </html>
